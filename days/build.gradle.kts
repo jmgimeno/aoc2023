@@ -40,12 +40,21 @@ java {
     }
 }
 
-tasks.named<JavaCompile>("compileJava") {
+tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-Xlint:all")
+    options.compilerArgs.add("--enable-preview")
 }
 
-tasks.named<Test>("test") {
-    // Use JUnit Platform for unit tests.
+tasks.withType<Test>().configureEach {
+    jvmArgs("--enable-preview")
+}
+
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     enableAssertions = true
+    jvmArgs("--enable-preview")
 }
+
+
+
+
