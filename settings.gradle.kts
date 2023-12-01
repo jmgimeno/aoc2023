@@ -12,3 +12,4 @@ plugins {
 
 rootProject.name = "aoc2023"
 include("days")
+include("meta")
