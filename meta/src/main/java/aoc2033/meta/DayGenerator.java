@@ -1,15 +1,26 @@
 package aoc2033.meta;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import static java.lang.StringTemplate.STR;
 
 public class DayGenerator {
 
-    static String generateProduction(int day) {
+    private static final int MAX_LINE_LENGTH = 100;
+    private static final int INDENT = 4;
+
+    static String generateProduction(int day, String instructions) {
         return STR
                 . """
             package aoc2023.day\{ day };
@@ -20,7 +31,7 @@ public class DayGenerator {
             public class Day\{ day } {
                         
                 /*
-
+                \{ formatInstructions(instructions, MAX_LINE_LENGTH, INDENT) }
                 */
 
                 int part1(List<String> data) {
@@ -97,13 +108,59 @@ public class DayGenerator {
                 """ ;
     }
 
+    static String getInstructionsForPart1(int day) {
+        // Hi, given the url https://adventofcode.com/2023/day/{day} for a given day,
+        // I'd want to scrape the instructions (the article tag) using jsoup and return
+        // them as a string without tags.
+        try {
+            String url = "https://adventofcode.com/2023/day/" + day;
+            Document doc = Jsoup.connect(url).get();
+            Elements articleElements = doc.select("article");
+            List<String> elements = new ArrayList<>();
+            for (Element element : articleElements.first().children()) {
+                elements.add(element.text() + (element.tagName().equals("p") ? "\n" : ""));
+            }
+            return String.join("\n", elements);
+        } catch (IOException e) {
+            return "Sorry, no instructions found for day %d".formatted(day);
+        }
+    }
+
+    static String formatInstructions(String instructions, int maxLineLength, int indent) {
+        // Given the instructions as a string, I'd like to format them so that each line
+        // starts fours spaces to the right and its max length is 80 characters.
+        String[] lines = instructions.split("\n");
+        List<String> formattedLines = new ArrayList<>();
+        for (String line : lines) {
+            String[] words = line.split("\\s+");
+            String formattedLine = "";
+            List<String> formattedWords = new ArrayList<>();
+            for (String word : words) {
+                if (formattedLine.length() + word.length() + 1 <= maxLineLength - indent) {
+                    formattedLine += (formattedLine.isEmpty() ? "" : " ") + word;
+                } else {
+                    formattedWords.add(formattedLine);
+                    formattedLine = word;
+                }
+            }
+            if (!formattedLine.isEmpty()) {
+                formattedWords.add(formattedLine);
+            }
+            formattedLines.add(formattedWords.stream()
+                    .map(s -> "    " + s)
+                    .collect(Collectors.joining("\n")));
+        }
+        return String.join("\n", formattedLines);
+    }
+
     static void generate(int day) throws IOException {
         var mainPackage = Path.of("days/src/main/java/aoc2023/day%d".formatted(day));
         var testPackage = Path.of("days/src/test/java/aoc2023/day%d".formatted(day));
         if (mainPackage.toFile().mkdir() && testPackage.toFile().mkdir()) {
+            var instructions = getInstructionsForPart1(day);
             var dayClass = mainPackage.resolve(Path.of("Day%d.java".formatted(day)));
             var testClass = testPackage.resolve(Path.of("Day%dTest.java".formatted(day)));
-            Files.writeString(dayClass, generateProduction(day));
+            Files.writeString(dayClass, generateProduction(day, instructions));
             Files.writeString(testClass, generateTest(day));
             System.out.printf("Enjoy your newly created day %d%n", day);
         } else {

@@ -12,6 +12,14 @@ java {
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.jsoup:jsoup:1.17.1")
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("--enable-preview")
 }
