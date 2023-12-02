@@ -11,7 +11,7 @@
 ## Challenges
 
 - Day 1: Trebuchet?!
-- Day 2:  
+- Day 2: Cube Conundrum
 - Day 3:  
 - Day 4:  
 - Day 5:  
