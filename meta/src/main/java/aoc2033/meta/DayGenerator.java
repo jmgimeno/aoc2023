@@ -61,10 +61,7 @@ public class DayGenerator {
 
                 class Day\{ day }Test {
                                 
-                    static final String part1 = \"""
-                            \""";
-
-                    static final String part2 = \"""
+                    static final String example = \"""
                             \""";
 
                     static final Day\{ day } day\{ day } = new Day\{ day }();
@@ -72,7 +69,7 @@ public class DayGenerator {
                     @Test
                     @DisplayName("part1 - example data")
                     void test1() {
-                        var data = IO.splitLinesAsImmutableList(part1);
+                        var data = IO.splitLinesAsImmutableList(example);
                         assertEquals(-1, day\{ day }.part1(data));
                     }
 
@@ -86,7 +83,7 @@ public class DayGenerator {
                     @Test
                     @DisplayName("part2 - example data")
                     void test3() {
-                        var data = IO.splitLinesAsImmutableList(part2);
+                        var data = IO.splitLinesAsImmutableList(example);
                         assertEquals(-1, day\{ day }.part2(data));
                     }
 
@@ -94,7 +91,7 @@ public class DayGenerator {
                     @DisplayName("part2 - input data")
                     void test4() {
                         var data = IO.getResourceAsImmutableList("day\{ day }.txt");
-                        assertEquals(-1, day\{ day }.part1(data));
+                        assertEquals(-1, day\{ day }.part2(data));
                     }
                 }
                 """ ;
