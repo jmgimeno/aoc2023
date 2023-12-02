@@ -31,7 +31,7 @@ public class DayGenerator {
             public class Day\{ day } {
                         
                 /*
-                \{ formatInstructions(instructions, MAX_LINE_LENGTH, INDENT) }
+                \{ formatInstructions(instructions) }
                 */
 
                 int part1(List<String> data) {
@@ -126,7 +126,7 @@ public class DayGenerator {
         }
     }
 
-    static String formatInstructions(String instructions, int maxLineLength, int indent) {
+    static String formatInstructions(String instructions) {
         // Given the instructions as a string, I'd like to format them so that each line
         // starts fours spaces to the right and its max length is 80 characters.
         String[] lines = instructions.split("\n");
@@ -134,23 +134,30 @@ public class DayGenerator {
         for (String line : lines) {
             String[] words = line.split("\\s+");
             String formattedLine = "";
-            List<String> formattedWords = new ArrayList<>();
-            for (String word : words) {
-                if (formattedLine.length() + word.length() + 1 <= maxLineLength - indent) {
-                    formattedLine += (formattedLine.isEmpty() ? "" : " ") + word;
-                } else {
-                    formattedWords.add(formattedLine);
-                    formattedLine = word;
-                }
-            }
-            if (!formattedLine.isEmpty()) {
-                formattedWords.add(formattedLine);
-            }
+            List<String> formattedWords = getFormattedWords(words, formattedLine);
             formattedLines.add(formattedWords.stream()
                     .map(s -> "    " + s)
                     .collect(Collectors.joining("\n")));
         }
         return String.join("\n", formattedLines);
+    }
+
+    private static List<String> getFormattedWords(String[] words, String formattedLine) {
+        List<String> formattedWords = new ArrayList<>();
+        StringBuilder formattedLineBuilder = new StringBuilder(formattedLine);
+        for (String word : words) {
+            if (formattedLineBuilder.length() + word.length() + 1 <= MAX_LINE_LENGTH - INDENT) {
+                formattedLineBuilder.append((formattedLineBuilder.isEmpty()) ? "" : " ").append(word);
+            } else {
+                formattedWords.add(formattedLineBuilder.toString());
+                formattedLineBuilder = new StringBuilder(word);
+            }
+        }
+        formattedLine = formattedLineBuilder.toString();
+        if (!formattedLine.isEmpty()) {
+            formattedWords.add(formattedLine);
+        }
+        return formattedWords;
     }
 
     static void generate(int day) throws IOException {
