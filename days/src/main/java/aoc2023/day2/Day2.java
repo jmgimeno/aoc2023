@@ -62,7 +62,6 @@ public class Day2 {
 
     enum Color {
         RED, GREEN, BLUE
-
     }
 
     static final int MAX_RED = 12;
@@ -81,41 +80,42 @@ public class Day2 {
                     * cubes.getOrDefault(Color.GREEN, 0)
                     * cubes.getOrDefault(Color.BLUE, 0);
         }
-    }
 
-    Game parse(String line) {
-        // parses using a regular expression the line and returns the total number of cubes if
-        // each color
-        // that are present in the lines with the format:
-        //    Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
-        //    Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
-        //    Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
-        //    Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
-        //    Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
-        // the result, for the first one, would be:
-        // RED -> 5, GREEN -> 3, BLUE -> 11
+        static Game parse(String line) {
+            // parses using a regular expression the line and returns the total number of cubes if
+            // each color
+            // that are present in the lines with the format:
+            //    Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+            //    Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+            //    Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+            //    Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+            //    Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+            // the result, for the first one, would be:
+            // RED -> 5, GREEN -> 3, BLUE -> 11
 
-        Map<Color, Integer> counters = new HashMap<>();
-        String regex = "Game (\\d+):|((\\d+)\\s+(blue|red|green))";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(line);
+            Map<Color, Integer> counters = new HashMap<>();
+            String regex = "Game (\\d+):|((\\d+)\\s+(blue|red|green))";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(line);
 
-        int gameId = 0;
-        while (matcher.find()) {
-            if (matcher.group(1) != null) {
-                gameId = Integer.parseInt(matcher.group(1));
-            } else {
-                int number = Integer.parseInt(matcher.group(3));
-                Color color = Color.valueOf(matcher.group(4).toUpperCase());
-                counters.put(color, Math.max(counters.getOrDefault(color, 0), number));
+            int gameId = 0;
+            while (matcher.find()) {
+                if (matcher.group(1) != null) {
+                    gameId = Integer.parseInt(matcher.group(1));
+                } else {
+                    int number = Integer.parseInt(matcher.group(3));
+                    Color color = Color.valueOf(matcher.group(4).toUpperCase());
+                    counters.put(color, Math.max(counters.getOrDefault(color, 0), number));
+                }
             }
+            return new Game(gameId, counters);
         }
-        return new Game(gameId, counters);
     }
+
 
     int part1(List<String> data) {
         return data.stream()
-                .map(this::parse)
+                .map(Game::parse)
                 .filter(Game::isValid)
                 .mapToInt(Game::id)
                 .sum();
@@ -158,7 +158,7 @@ public class Day2 {
 
     int part2(List<String> data) {
         return data.stream()
-                .map(this::parse)
+                .map(Game::parse)
                 .mapToInt(Game::power)
                 .sum();
     }

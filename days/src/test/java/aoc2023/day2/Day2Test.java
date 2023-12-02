@@ -49,7 +49,7 @@ class Day2Test {
     @Test
     @DisplayName("parse - example data - game 1")
     void test5() {
-        var game = day2.parse("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green");
+        var game = Day2.Game.parse("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green");
         assertEquals(1, game.id());
         assertEquals(4, game.cubes().get(Day2.Color.RED));
         assertEquals(2, game.cubes().get(Day2.Color.GREEN));
@@ -59,7 +59,7 @@ class Day2Test {
     @Test
     @DisplayName("parse - example data - game 2")
     void test6() {
-        var game = day2.parse("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue");
+        var game = Day2.Game.parse("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue");
         assertEquals(2, game.id());
         assertEquals(1, game.cubes().get(Day2.Color.RED));
         assertEquals(3, game.cubes().get(Day2.Color.GREEN));
@@ -69,7 +69,7 @@ class Day2Test {
     @Test
     @DisplayName("power - example data - game 1")
     void test7() {
-        var game = day2.parse("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green");
+        var game = Day2.Game.parse("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green");
         assertEquals(48, game.power());
     }
 }
