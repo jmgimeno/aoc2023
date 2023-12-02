@@ -64,11 +64,12 @@ public class Day2 {
         RED, GREEN, BLUE
     }
 
-    static final int MAX_RED = 12;
-    static final int MAX_GREEN = 13;
-    static final int MAX_BLUE = 14;
-
     record Game(int id, Map<Color, Integer> cubes) {
+
+        static final int MAX_RED = 12;
+        static final int MAX_GREEN = 13;
+        static final int MAX_BLUE = 14;
+
         boolean isValid() {
             return cubes.getOrDefault(Color.RED, 0) <= MAX_RED
                     && cubes.getOrDefault(Color.GREEN, 0) <= MAX_GREEN
@@ -111,7 +112,6 @@ public class Day2 {
             return new Game(gameId, counters);
         }
     }
-
 
     int part1(List<String> data) {
         return data.stream()
