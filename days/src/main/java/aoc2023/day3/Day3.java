@@ -1,7 +1,6 @@
 package aoc2023.day3;
 
 import aoc2023.utils.IO;
-import org.checkerframework.common.value.qual.IntRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,18 +53,21 @@ public class Day3 {
     Your puzzle answer was 553825.
     */
 
-    record Position(int x, int y) {
-        boolean isAjacent(Position other) {
-            return Math.abs(x - other.x) <= 1 && Math.abs(y - other.y) <= 1;
-        }
+    static boolean isSymbol(char c) {
+        return !Character.isDigit(c) && c != '.';
     }
 
-    record PartNumber(int number, Position start, Position end) {
+    static boolean isGear(char c) {
+        return c == '*';
+    }
+
+    record Position(int x, int y) {
+    }
+
+    record PartNumber(int number, int row, int colStart, int colEnd) {
         public boolean touches(Position position) {
-            // return truew if the position of the gear touches
-            // any of the positions occupied by the part number
-            return IntStream.rangeClosed(start.x(), end.x())
-                    .anyMatch(x -> position.isAjacent(new Position(x, start.y())));
+            return row - 1 <= position.y() && position.y() <= row + 1
+                    && colStart - 1 <= position.x() && position.x() <= colEnd + 1;
         }
     }
 
@@ -96,88 +98,65 @@ public class Day3 {
             }
         }
 
-        List<PartNumber> getPartNumbersInLine(int y) {
-            // Using the char matrix, return a list of part numbers in the given line
-            // a part number is a sequence of digits that are adjacent to a symbol
-            // a symbol is a character that is not a digit or a period
-            // you are given the y coordinate of the line
-
-            // 1. Initialize an empty list to store the part numbers.
-            // 2. Iterate over the characters in the line at the given y coordinate.
-            // 3. If a character is a digit, append it to the current part number string.
-            // 4. If a character is a symbol (not a digit or a period), check the surrounding characters. If any of them are digits, add the current part number string to the list and start a new part number string.
-            // 5. At the end of the line, if the current part number string is not empty, add it to the list.
-            // 6. Return the list of part numbers.
-
-            // The first solution didn't took into account the fact that a number ennds when a symbol is found (the problem was with my prompt)
-
+        List<PartNumber> partNumbersInLine(int y) {
             List<PartNumber> partNumbers = new ArrayList<>();
-            StringBuilder currentPartNumber = new StringBuilder();
-            Position start = null;
+            StringBuilder currentPart = new StringBuilder();
+            int start = -1;
 
             for (int x = 1; x < width + 1; x++) {
                 char currentChar = points[y][x];
 
                 if (Character.isDigit(currentChar)) {
-                    currentPartNumber.append(currentChar);
-                    if (start == null) {
-                        start = new Position(x, y);
+                    currentPart.append(currentChar);
+                    if (start == -1) {
+                        start = x;
                     }
                 } else {
-                    if (currentPartNumber.length() > 0) {
-                        partNumbers.add(new PartNumber(Integer.parseInt(currentPartNumber.toString()), start, new Position(x - 1, y)));
-                        currentPartNumber = new StringBuilder();
-                        start = null;
+                    if (!currentPart.isEmpty()) {
+                        partNumbers.add(new PartNumber(Integer.parseInt(currentPart.toString()), y, start, x - 1));
+                        currentPart = new StringBuilder();
+                        start = -1;
                     }
                 }
             }
 
-            if (currentPartNumber.length() > 0) {
-                partNumbers.add(new PartNumber(Integer.parseInt(currentPartNumber.toString()), start, new Position(width - 1, y)));
+            if (!currentPart.isEmpty()) {
+                partNumbers.add(new PartNumber(Integer.parseInt(currentPart.toString()), y, start, width - 1));
             }
 
             return partNumbers;
         }
 
-        static boolean isSymbol(char c) {
-            return !Character.isDigit(c) && c != '.';
-        }
-
         boolean surroundedBySymbol(PartNumber partNumber) {
-            // Given a part number, return true if it is surrounded by symbols, false otherwise.
-            // A symbol is a character that is not a digit or a period.
-            // The part number is represented by a start and end position.
-            // The start and end positions are inclusive.
-            // The part number is surrounded by symbols if any of the characters around it are symbols.
-            // The characters around it are the characters above, below, to the left, and to the right of the start and end positions.
 
-            Position start = partNumber.start();
-            Position end = partNumber.end();
+            int row = partNumber.row();
+            int start = partNumber.colStart();
+            int end = partNumber.colEnd();
 
             // check the characters above
-            for (int x = start.x(); x <= end.x(); x++) {
-                if (isSymbol(points[start.y() - 1][x])) {
+            for (int x = start; x <= end; x++) {
+                if (isSymbol(points[row - 1][x])) {
                     return true;
                 }
             }
 
             // check the characters below
-            for (int x = start.x(); x <= end.x(); x++) {
-                if (isSymbol(points[end.y() + 1][x])) {
+            for (int x = start; x <= end; x++) {
+                if (isSymbol(points[row + 1][x])) {
                     return true;
                 }
             }
 
             // check the characters to the left
-            for (int y = start.y() - 1; y <= start.y() + 1; y++) {
-                if (isSymbol(points[y][start.x() - 1])) {
+            for (int y = row - 1; y <= row + 1; y++) {
+                if (isSymbol(points[y][start - 1])) {
                     return true;
                 }
             }
 
             // check the characters to the right
-            for (int y = start.y() - 1; y <= start.y() + 1; y++) {
-                if (isSymbol(points[y][end.x() + 1])) {
+            for (int y = row - 1; y <= row + 1; y++) {
+                if (isSymbol(points[y][end + 1])) {
                     return true;
                 }
             }
@@ -187,7 +166,7 @@ public class Day3 {
 
         List<Integer> allSurroundedBySymbols() {
             return IntStream.rangeClosed(1, height)
-                    .mapToObj(this::getPartNumbersInLine)
+                    .mapToObj(this::partNumbersInLine)
                     .flatMap(List::stream)
                     .filter(this::surroundedBySymbol)
                     .map(PartNumber::number)
@@ -196,38 +175,27 @@ public class Day3 {
 
         int sumPartNumbers() {
             return IntStream.rangeClosed(1, height)
-                    .mapToObj(this::getPartNumbersInLine)
+                    .mapToObj(this::partNumbersInLine)
                     .flatMap(List::stream)
                     .filter(this::surroundedBySymbol)
                     .mapToInt(PartNumber::number)
                     .sum();
         }
 
-        List<Gear> getALlGears() {
-            // 1. Initialize an empty list to store the gears.
-            // 2. Iterate over the characters in the schematic.
-            // 3. If a character is a *, add it to the list.
-            // 4. Return the list of gears.
-
-            List<Gear> gears = new ArrayList<>();
-
-            for (int y = 1; y < height + 1; y++) {
-                for (int x = 1; x < width + 1; x++) {
-                    if (points[y][x] == '*') {
-                        gears.add(new Gear(new Position(x, y)));
-                    }
-                }
-            }
-
-            return gears;
+        List<Position> gearPositions() {
+            return IntStream.rangeClosed(1, height).boxed()
+                    .flatMap(y -> IntStream.rangeClosed(1, width)
+                            .filter(x -> isGear(points[y][x]))
+                            .mapToObj(x -> new Position(x, y))).toList();
         }
 
-        int adjacentProduct(Gear gear) {
-            var y = gear.position().y();
+        int gearFactor(Position gear) {
+            assert isGear(points[gear.y()][gear.x()]);
+            var y = gear.y();
             var candidates = IntStream.rangeClosed(y - 1, y + 1)
                     .boxed()
-                    .flatMap(row -> getPartNumbersInLine(row).stream())
-                    .filter(p -> p.touches(gear.position))
+                    .flatMap(row -> partNumbersInLine(row).stream())
+                    .filter(p -> p.touches(gear))
                     .toList();
             if (candidates.size() != 2) {
                 return 0;
@@ -246,7 +214,6 @@ public class Day3 {
             }
             return sb.toString();
         }
-
     }
 
     int part1(List<String> data) {
@@ -296,14 +263,10 @@ public class Day3 {
     Your puzzle answer was 93994191.
      */
 
-    record Gear(Position position) {
-    }
-
-
     int part2(List<String> data) {
         var schematic = new Schematic(data);
-        return schematic.getALlGears().stream()
-                .mapToInt(schematic::adjacentProduct)
+        return schematic.gearPositions().stream()
+                .mapToInt(schematic::gearFactor)
                 .sum();
     }
 
