@@ -1,6 +1,7 @@
 package aoc2023.day3;
 
 import aoc2023.utils.IO;
+import org.checkerframework.common.value.qual.IntRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +61,12 @@ public class Day3 {
     }
 
     record PartNumber(int number, Position start, Position end) {
+        public boolean touches(Position position) {
+            // return truew if the position of the gear touches
+            // any of the positions occupied by the part number
+            return IntStream.rangeClosed(start.x(), end.x())
+                    .anyMatch(x -> position.isAjacent(new Position(x, start.y())));
+        }
     }
 
     static class Schematic {
@@ -196,6 +203,38 @@ public class Day3 {
                     .sum();
         }
 
+        List<Gear> getALlGears() {
+            // 1. Initialize an empty list to store the gears.
+            // 2. Iterate over the characters in the schematic.
+            // 3. If a character is a *, add it to the list.
+            // 4. Return the list of gears.
+
+            List<Gear> gears = new ArrayList<>();
+
+            for (int y = 1; y < height + 1; y++) {
+                for (int x = 1; x < width + 1; x++) {
+                    if (points[y][x] == '*') {
+                        gears.add(new Gear(new Position(x, y)));
+                    }
+                }
+            }
+
+            return gears;
+        }
+
+        int adjacentProduct(Gear gear) {
+            var y = gear.position().y();
+            var candidates = IntStream.rangeClosed(y - 1, y + 1)
+                    .boxed()
+                    .flatMap(row -> getPartNumbersInLine(row).stream())
+                    .filter(p -> p.touches(gear.position))
+                    .toList();
+            if (candidates.size() != 2) {
+                return 0;
+            }
+            return candidates.get(0).number() * candidates.get(1).number();
+        }
+
         @Override
         public String toString() {
             var sb = new StringBuilder();
@@ -254,11 +293,18 @@ public class Day3 {
 
     What is the sum of all of the gear ratios in your engine schematic?
 
-
+    Your puzzle answer was 93994191.
      */
 
+    record Gear(Position position) {
+    }
+
+
     int part2(List<String> data) {
-        return -1;
+        var schematic = new Schematic(data);
+        return schematic.getALlGears().stream()
+                .mapToInt(schematic::adjacentProduct)
+                .sum();
     }
 
     public static void main(String[] args) {

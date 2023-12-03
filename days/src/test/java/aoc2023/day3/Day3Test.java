@@ -42,18 +42,16 @@ class Day3Test {
 
     @Test
     @DisplayName("part2 - example data")
-    @Disabled("not implemented")
     void test3() {
         var data = IO.splitLinesAsImmutableList(example);
-        assertEquals(-1, day3.part2(data));
+        assertEquals(467835, day3.part2(data));
     }
 
     @Test
     @DisplayName("part2 - input data")
-    @Disabled("not implemented")
     void test4() {
         var data = IO.getResourceAsImmutableList("day3.txt");
-        assertEquals(-1, day3.part2(data));
+        assertEquals(93994191, day3.part2(data));
     }
 
     @Test
@@ -63,8 +61,8 @@ class Day3Test {
         var schematic = new Day3.Schematic(data);
         var partNumbers = schematic.getPartNumbersInLine(1);
         var expected = List.of(
-            new Day3.PartNumber(467, new Day3.Position(1, 1), new Day3.Position(3, 1)),
-            new Day3.PartNumber(114, new Day3.Position(6, 1), new Day3.Position(8, 1))
+                new Day3.PartNumber(467, new Day3.Position(1, 1), new Day3.Position(3, 1)),
+                new Day3.PartNumber(114, new Day3.Position(6, 1), new Day3.Position(8, 1))
         );
         assertEquals(expected, partNumbers);
     }
@@ -92,7 +90,6 @@ class Day3Test {
     void test8() {
         var data = IO.splitLinesAsImmutableList(example);
         var schematic = new Day3.Schematic(data);
-        System.out.println(schematic);
         var expected = List.of(467, 35, 633, 617, 592, 755, 664, 598);
         assertEquals(expected, schematic.allSurroundedBySymbols());
     }
@@ -117,5 +114,18 @@ class Day3Test {
         var data = IO.splitLinesAsImmutableList(example);
         var schematic = new Day3.Schematic(data);
         assertEquals(expected, schematic.toString());
+    }
+
+    @Test
+    @DisplayName("part2 - test data - get all gears")
+    void test10() {
+        var data = IO.splitLinesAsImmutableList(example);
+        var schematic = new Day3.Schematic(data);
+        var expected = List.of(
+                new Day3.Gear(new Day3.Position(4, 2)),
+                new Day3.Gear(new Day3.Position(4, 5)),
+                new Day3.Gear(new Day3.Position(6, 9))
+        );
+        assertEquals(expected, schematic.getALlGears());
     }
 }
