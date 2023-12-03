@@ -71,31 +71,10 @@ public class Day3 {
         }
     }
 
-    static class Schematic {
-
-        final int height;
-        final int width;
-        final char[][] points;
+    static class Schematic extends aoc2023.utils.CharGrid {
 
         Schematic(List<String> data) {
-            height = data.size();
-            width = data.get(0).length();
-            points = new char[height + 2][width + 2];
-            // fill the matrix of points with the contents of the data
-            // and surround it by '.' to avoid out of bounds checks
-            fillPoints(data);
-        }
-
-        private void fillPoints(List<String> data) {
-            for (int y = 0; y < height + 2; y++) {
-                for (int x = 0; x < width + 2; x++) {
-                    if (x == 0 || y == 0 || x == width + 1 || y == height + 1) {
-                        points[y][x] = '.';
-                    } else {
-                        points[y][x] = data.get(y - 1).charAt(x - 1);
-                    }
-                }
-            }
+            super(data);
         }
 
         List<PartNumber> partNumbersInLine(int y) {
@@ -203,17 +182,6 @@ public class Day3 {
             return candidates.get(0).number() * candidates.get(1).number();
         }
 
-        @Override
-        public String toString() {
-            var sb = new StringBuilder();
-            for (int y = 0; y < height + 2; y++) {
-                for (int x = 0; x < width + 2; x++) {
-                    sb.append(points[y][x]);
-                }
-                sb.append("\n");
-            }
-            return sb.toString();
-        }
     }
 
     int part1(List<String> data) {
