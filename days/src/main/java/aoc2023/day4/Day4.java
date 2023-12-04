@@ -177,9 +177,9 @@ public class Day4 {
         var cardCounter = new CardCounter(new HashMap<>());
         for (var card : cards) {
             cardCounter.addOne(card.id());
-            int factor = cardCounter.get(card.id());
+            int numCopies = cardCounter.get(card.id());
             for (int i = 1; i <= card.count(); i++) {
-                cardCounter.addMany(card.id() + i, factor);
+                cardCounter.addMany(card.id() + i, numCopies);
             }
         }
         return cardCounter.count();
