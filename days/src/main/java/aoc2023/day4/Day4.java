@@ -2,10 +2,7 @@ package aoc2023.day4;
 
 import aoc2023.utils.IO;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -157,17 +154,35 @@ public class Day4 {
     Including the original set of scratchcards, how many total scratchcards do you end up with?
      */
 
+    record CardCounter(Map<Integer, Integer> counters) {
+        void addOne(int cardId) {
+            addMany(cardId, 1);
+        }
+
+        void addMany(int cardId, int increment) {
+            counters.merge(cardId, increment, Integer::sum);
+        }
+
+        int count() {
+            return counters.values().stream().mapToInt(Integer::intValue).sum();
+        }
+
+        int get(int cardId) {
+            return counters.getOrDefault(cardId, 0);
+        }
+    }
+
     int part2(List<String> data) {
         var cards = data.stream().map(Card::parse).toList();
-        var counters = new HashMap<Integer, Integer>();
+        var cardCounter = new CardCounter(new HashMap<>());
         for (var card : cards) {
-            counters.compute(card.id(), (k, v) -> v == null ? 1 : v + 1);
-            int factor = counters.get(card.id());
+            cardCounter.addOne(card.id());
+            int factor = cardCounter.get(card.id());
             for (int i = 1; i <= card.count(); i++) {
-                counters.compute(card.id() + i, (k, v) -> v == null ? factor : v + factor);
+                cardCounter.addMany(card.id() + i, factor);
             }
         }
-        return counters.values().stream().mapToInt(Integer::intValue).sum();
+        return cardCounter.count();
     }
 
     public static void main(String[] args) {
