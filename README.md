@@ -12,8 +12,8 @@
 
 - Day 1: Trebuchet?!
 - Day 2: Cube Conundrum
-- Day 3:  
-- Day 4:  
+- Day 3: Gear Ratios
+- Day 4: Scratchcards
 - Day 5:  
 - Day 6:  
 - Day 7:  
