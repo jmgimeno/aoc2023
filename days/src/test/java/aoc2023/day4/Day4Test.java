@@ -1,7 +1,6 @@
 package aoc2023.day4;
 
 import aoc2023.utils.IO;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,37 +22,36 @@ class Day4Test {
     @Test
     @DisplayName("part1 - example data")
     void test1() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         assertEquals(13, day4.part1(data));
     }
 
     @Test
     @DisplayName("part1 - input data")
     void test2() {
-        var data = IO.getResourceAsImmutableList("day4.txt");
+        var data = IO.getResourceAsList("day4.txt");
         assertEquals(22488, day4.part1(data));
     }
 
     @Test
     @DisplayName("part2 - example data")
     void test3() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         assertEquals(30, day4.part2(data));
     }
 
     @Test
     @DisplayName("part2 - example data - card1")
     void test3a() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         var card = Day4.Card.parse(data.get(0));
         assertEquals(4, card.count());
     }
 
     @Test
     @DisplayName("part2 - input data")
-    @Disabled("part2 - not implemented")
     void test4() {
-        var data = IO.getResourceAsImmutableList("day4.txt");
-        assertEquals(-1, day4.part2(data));
+        var data = IO.getResourceAsList("day4.txt");
+        assertEquals(7013204, day4.part2(data));
     }
 }

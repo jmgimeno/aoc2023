@@ -2,8 +2,8 @@ package aoc2023.day1;
 
 import aoc2023.utils.IO;
 import com.google.common.collect.Comparators;
-import com.google.common.collect.ImmutableList;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.MatchResult;
@@ -73,7 +73,7 @@ public class Day1 {
         final Pattern pattern;
 
         Finder(String... names) {
-            this.names = ImmutableList.copyOf(names);
+            this.names = Arrays.asList(names);
             var regexp = this.names.stream().reduce((a, b) -> a + "|" + b).orElseThrow();
             this.pattern = Pattern.compile(regexp);
         }
@@ -154,7 +154,7 @@ public class Day1 {
 
     public static void main(String[] args) {
         var day1 = new Day1();
-        var data = IO.getResourceAsImmutableList("day1.txt");
+        var data = IO.getResourceAsList("day1.txt");
         var part1 = day1.part1(data);
         System.out.println("part1 = " + part1);
         var part2 = day1.part2(data);

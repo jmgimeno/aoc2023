@@ -28,35 +28,35 @@ class Day3Test {
     @Test
     @DisplayName("part1 - example data")
     void test1() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         assertEquals(4361, day3.part1(data));
     }
 
     @Test
     @DisplayName("part1 - input data")
     void test2() {
-        var data = IO.getResourceAsImmutableList("day3.txt");
+        var data = IO.getResourceAsList("day3.txt");
         assertEquals(553825, day3.part1(data));
     }
 
     @Test
     @DisplayName("part2 - example data")
     void test3() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         assertEquals(467835, day3.part2(data));
     }
 
     @Test
     @DisplayName("part2 - input data")
     void test4() {
-        var data = IO.getResourceAsImmutableList("day3.txt");
+        var data = IO.getResourceAsList("day3.txt");
         assertEquals(93994191, day3.part2(data));
     }
 
     @Test
     @DisplayName("part2 - test data - PartNumbers in line 1")
     void test5() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         var schematic = new Day3.Schematic(data);
         var partNumbers = schematic.partNumbersInLine(1);
         var expected = List.of(
@@ -69,7 +69,7 @@ class Day3Test {
     @Test
     @DisplayName("part2 - test data - 467 is surrounded by symbol")
     void test6() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         var schematic = new Day3.Schematic(data);
         var partNumber = new Day3.PartNumber(467, 1, 1, 3);
         assertTrue(schematic.surroundedBySymbol(partNumber));
@@ -78,7 +78,7 @@ class Day3Test {
     @Test
     @DisplayName("part2 - test data - 114 is surrounded by symbol")
     void test7() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         var schematic = new Day3.Schematic(data);
         var partNumber = new Day3.PartNumber(114, 1, 6, 8);
         assertFalse(schematic.surroundedBySymbol(partNumber));
@@ -87,7 +87,7 @@ class Day3Test {
     @Test
     @DisplayName("part2 - test data - all numbers surrounded by symbol")
     void test8() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         var schematic = new Day3.Schematic(data);
         var expected = List.of(467, 35, 633, 617, 592, 755, 664, 598);
         assertEquals(expected, schematic.allSurroundedBySymbols());
@@ -110,7 +110,7 @@ class Day3Test {
                 ..664.598...
                 ............
                 """;
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         var schematic = new Day3.Schematic(data);
         assertEquals(expected, schematic.toString());
     }
@@ -118,7 +118,7 @@ class Day3Test {
     @Test
     @DisplayName("part2 - test data - get all gears")
     void test10() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         var schematic = new Day3.Schematic(data);
         var expected = List.of(
                 new Day3.Position(4, 2),

@@ -21,28 +21,28 @@ class Day2Test {
     @Test
     @DisplayName("part1 - example data")
     void test1() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         assertEquals(8, day2.part1(data));
     }
 
     @Test
     @DisplayName("part1 - input data")
     void test2() {
-        var data = IO.getResourceAsImmutableList("day2.txt");
+        var data = IO.getResourceAsList("day2.txt");
         assertEquals(3099, day2.part1(data));
     }
 
     @Test
     @DisplayName("part2 - example data")
     void test3() {
-        var data = IO.splitLinesAsImmutableList(example);
+        var data = IO.splitLinesAsList(example);
         assertEquals(2286, day2.part2(data));
     }
 
     @Test
     @DisplayName("part2 - input data")
     void test4() {
-        var data = IO.getResourceAsImmutableList("day2.txt");
+        var data = IO.getResourceAsList("day2.txt");
         assertEquals(72970, day2.part2(data));
     }
 

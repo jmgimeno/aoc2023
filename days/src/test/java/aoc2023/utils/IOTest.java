@@ -9,7 +9,7 @@ class IOTest {
 
     @Test
     void readResource() {
-        var contents = IO.getResourceAsImmutableList("resource_as_immutable_list.txt");
+        var contents = IO.getResourceAsList("resource_as_immutable_list.txt");
         var expected = ImmutableList.of("alpha", "beta", "gamma");
         assertEquals(expected, contents);
     }

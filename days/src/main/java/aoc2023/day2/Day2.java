@@ -165,7 +165,7 @@ public class Day2 {
 
     public static void main(String[] args) {
         var day2 = new Day2();
-        var data = IO.getResourceAsImmutableList("day2.txt");
+        var data = IO.getResourceAsList("day2.txt");
         var part1 = day2.part1(data);
         System.out.println("part1 = " + part1);
         var part2 = day2.part2(data);

@@ -240,7 +240,7 @@ public class Day3 {
 
     public static void main(String[] args) {
         var day3 = new Day3();
-        var data = IO.getResourceAsImmutableList("day3.txt");
+        var data = IO.getResourceAsList("day3.txt");
         var part1 = day3.part1(data);
         System.out.println("part1 = " + part1);
         var part2 = day3.part2(data);
