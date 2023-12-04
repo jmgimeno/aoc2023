@@ -1,9 +1,9 @@
 plugins {
-    application
+    id("application")
 }
 
 application {
-    mainClass.set("aoc2023.meta.DayGenerator")
+    mainClass = "aoc2023.meta.DayGenerator"
 }
 
 java {
@@ -26,4 +26,5 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.withType<JavaExec>().configureEach {
     jvmArgs("--enable-preview")
+    standardInput = System.`in`
 }

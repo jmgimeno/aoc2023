@@ -1,4 +1,4 @@
-package aoc2033.meta;
+package aoc2023.meta;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -51,8 +51,8 @@ public class DayGenerator {
                     var data = IO.getResourceAsImmutableList("day\{ day }.txt");
                     var part1 = day\{ day }.part1(data);
                     System.out.println("part1 = " + part1);
-                    var part2 = day\{ day }.part2(data);
-                    System.out.println("part2 = " + part2);
+            //        var part2 = day\{ day }.part2(data);
+            //        System.out.println("part2 = " + part2);
                 }
             }
             """ ;
