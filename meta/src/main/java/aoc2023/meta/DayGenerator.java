@@ -48,7 +48,7 @@ public class DayGenerator {
 
                 public static void main(String[] args) {
                     var day\{ day } = new Day\{ day }();
-                    var data = IO.getResourceAsImmutableList("day\{ day }.txt");
+                    var data = IO.getResourceAsList("day\{ day }.txt");
                     var part1 = day\{ day }.part1(data);
                     System.out.println("part1 = " + part1);
             //        var part2 = day\{ day }.part2(data);
@@ -82,7 +82,7 @@ public class DayGenerator {
                     @DisplayName("part1 - example data")
                     @Disabled("part1 - not implemented")
                     void test1() {
-                        var data = IO.splitLinesAsImmutableList(example);
+                        var data = IO.splitLinesAsList(example);
                         assertEquals(-1, day\{ day }.part1(data));
                     }
 
@@ -90,7 +90,7 @@ public class DayGenerator {
                     @DisplayName("part1 - input data")
                     @Disabled("part1 - not implemented")
                     void test2() {
-                        var data = IO.getResourceAsImmutableList("day\{ day }.txt");
+                        var data = IO.getResourceAsList("day\{ day }.txt");
                         assertEquals(-1, day\{ day }.part1(data));
                     }
 
@@ -98,7 +98,7 @@ public class DayGenerator {
                     @DisplayName("part2 - example data")
                     @Disabled("part2 - not implemented")
                     void test3() {
-                        var data = IO.splitLinesAsImmutableList(example);
+                        var data = IO.splitLinesAsList(example);
                         assertEquals(-1, day\{ day }.part2(data));
                     }
 
@@ -106,7 +106,7 @@ public class DayGenerator {
                     @DisplayName("part2 - input data")
                     @Disabled("part2 - not implemented")
                     void test4() {
-                        var data = IO.getResourceAsImmutableList("day\{ day }.txt");
+                        var data = IO.getResourceAsList("day\{ day }.txt");
                         assertEquals(-1, day\{ day }.part2(data));
                     }
                 }
