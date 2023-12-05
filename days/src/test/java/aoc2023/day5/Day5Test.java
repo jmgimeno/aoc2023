@@ -134,7 +134,7 @@ class Day5Test {
     }
 
     @Test
-    @DisplayName("transform a covered range")
+    @DisplayName("minLocation a covered range")
     void test11() {
         var input = new Day5.Range(2, 3);
         var segment = new Day5.SegmentMap(4, 1, 8);
@@ -143,7 +143,7 @@ class Day5Test {
     }
 
     @Test
-    @DisplayName("transform a range")
+    @DisplayName("minLocation a range")
     void test12() {
         var input = new Day5.Range(1, 11);
         var segment = new Day5.SegmentMap(20, 5, 3);

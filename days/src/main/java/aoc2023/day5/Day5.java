@@ -234,11 +234,11 @@ public class Day5 {
             return composition.applyAsLong(input);
         }
 
-        public Set<Range> transform(Set<Range> input) {
+        public long minLocation(Range input) {
             var composition = maps.stream()
                     .map(Map::asUnaryOperator)
                     .reduce(UnaryOperator.identity(), (m1, m2) -> s -> m2.apply(m1.apply(s)));
-            return composition.apply(input);
+            return composition.apply(Set.of(input)).stream().mapToLong(Range::start).min().orElseThrow();
         }
     }
 
@@ -415,9 +415,8 @@ public class Day5 {
 
     long part2(List<String> data) {
         var parsed = Day5InputPart2.parse(data);
-        var segments = parsed.almanac().transform(parsed.seeds().ranges());
-        return segments.stream()
-                .mapToLong(Range::start)
+        return parsed.seeds().ranges().stream()
+                .mapToLong(parsed.almanac()::minLocation)
                 .min()
                 .orElseThrow();
     }
