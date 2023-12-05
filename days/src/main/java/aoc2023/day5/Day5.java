@@ -379,6 +379,8 @@ public class Day5 {
             }
             return new SeedRanges(ranges);
         }
+
+
     }
 
     record Day5InputPart2(SeedRanges seeds, Almanac almanac) {
