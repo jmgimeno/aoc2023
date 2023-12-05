@@ -137,15 +137,15 @@ public class Day5 {
     Your puzzle answer was 825516882.
     */
 
-    record SegmentMap(long destinationStart, long sourceStart,
-                      long length) {
+    record SegmentMap(long destinationStart, long sourceStart, long length) {
 
         boolean isInRange(long value) {
             return sourceStart <= value && value < sourceStart + length;
         }
 
         public long transformCovered(long input) {
-            return destinationStart + input - sourceStart;
+            var delta = destinationStart - sourceStart;
+            return input + delta;
         }
 
         public Coverage transform(Range input) {
@@ -165,25 +165,24 @@ public class Day5 {
                 return new Coverage(List.of(transformCovered(covered)), List.of(left, right));
             } else if (input.start <= sourceStart) {
                 // Segment overlaps on the right side of the input
+                var left = new Range(input.start, sourceStart - input.start);
                 var covered = new Range(sourceStart, inputEnd - sourceStart);
-                var uncovered = new Range(input.start, sourceStart - input.start);
-                return new Coverage(List.of(transformCovered(covered)), List.of(uncovered));
+                return new Coverage(List.of(transformCovered(covered)), List.of(left));
             } else {
                 // Segment overlaps on the left side of the input
                 var covered = new Range(input.start, sourceEnd - input.start);
-                var uncovered = new Range(sourceEnd, inputEnd - sourceEnd);
-                return new Coverage(List.of(transformCovered(covered)), List.of(uncovered));
+                var right = new Range(sourceEnd, inputEnd - sourceEnd);
+                return new Coverage(List.of(transformCovered(covered)), List.of(right));
             }
         }
 
-        public Range transformCovered(Range coveredRange) {
+        public Range transformCovered(Range input) {
             var delta = destinationStart - sourceStart;
-            return new Range(coveredRange.start + delta, coveredRange.length);
+            return new Range(input.start + delta, input.length);
         }
     }
 
-    record Map(String name,
-               List<SegmentMap> segmentMaps) {
+    record Map(String name, List<SegmentMap> segmentMaps) {
 
         public long transform(long value) {
             return segmentMaps.stream()
@@ -194,18 +193,18 @@ public class Day5 {
         }
 
         public List<Range> transform(List<Range> input) {
-            var unprocessed = new ArrayList<>(input);
+            var ranges = new ArrayList<>(input);
             var result = new ArrayList<Range>();
             for (var segment : segmentMaps) {
-                var nextUnprocessed = new ArrayList<Range>();
-                for (var range : unprocessed) {
+                var nextRanges = new ArrayList<Range>();
+                for (var range : ranges) {
                     var coverage = segment.transform(range);
                     result.addAll(coverage.covered());
-                    nextUnprocessed.addAll(coverage.uncovered());
+                    nextRanges.addAll(coverage.uncovered());
                 }
-                unprocessed = nextUnprocessed;
+                ranges = nextRanges;
             }
-            result.addAll(unprocessed);
+            result.addAll(ranges);
             return result;
         }
 
@@ -235,14 +234,15 @@ public class Day5 {
         public long minLocation(long input) {
             var composition = maps.stream()
                     .map(Map::asLongUnaryOperator)
-                    .reduce(LongUnaryOperator.identity(), LongUnaryOperator::andThen);
+                    .reduce((long l) -> l, LongUnaryOperator::andThen);
             return composition.applyAsLong(input);
         }
 
         public long minLocation(Range input) {
             var composition = maps.stream()
                     .map(Map::asUnaryOperator)
-                    .reduce(UnaryOperator.identity(), (m1, m2) -> s -> m2.apply(m1.apply(s)));
+                    .reduce(UnaryOperator.identity(),
+                            (op1, op2) -> ranges -> op2.apply(op1.apply(ranges)));
             return composition.apply(List.of(input)).stream().mapToLong(Range::start).min().orElseThrow();
         }
     }
@@ -326,10 +326,10 @@ public class Day5 {
     record Range(long start, long length) {
     }
 
-    record SeedRanges(Set<Range> ranges) {
+    record SeedRanges(List<Range> ranges) {
         static SeedRanges parse(String line) {
             var numbers = line.replace("seeds: ", "").split(" ");
-            var ranges = new HashSet<Range>();
+            var ranges = new ArrayList<Range>();
             for (int i = 0; i < numbers.length; i += 2) {
                 var start = Long.parseLong(numbers[i]);
                 var length = Long.parseLong(numbers[i + 1]);
