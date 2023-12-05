@@ -79,7 +79,7 @@ public class Day5 {
     water to use with which fertilizer, and so on.
 
     Rather than list every source number and its corresponding destination number one by one, the
-    maps describe entire segmentMaps of numbers that can be converted. Each line within a map
+    maps describe entire segments of numbers that can be converted. Each line within a map
     contains
     three numbers: the destination range start, the source range start, and the range length.
 
@@ -137,7 +137,7 @@ public class Day5 {
     Your puzzle answer was 825516882.
     */
 
-    record SegmentMap(long destinationStart, long sourceStart, long length) {
+    record Segment(long destinationStart, long sourceStart, long length) {
 
         boolean isInRange(long value) {
             return sourceStart <= value && value < sourceStart + length;
@@ -182,10 +182,10 @@ public class Day5 {
         }
     }
 
-    record Map(String name, List<SegmentMap> segmentMaps) {
+    record Map(String name, List<Segment> segments) {
 
         public long transform(long value) {
-            return segmentMaps.stream()
+            return segments.stream()
                     .filter(r -> r.isInRange(value))
                     .mapToLong(r -> r.transformCovered(value))
                     .findFirst()
@@ -195,7 +195,7 @@ public class Day5 {
         public List<Range> transform(List<Range> input) {
             var ranges = new ArrayList<>(input);
             var result = new ArrayList<Range>();
-            for (var segment : segmentMaps) {
+            for (var segment : segments) {
                 var nextRanges = new ArrayList<Range>();
                 for (var range : ranges) {
                     var coverage = segment.transform(range);
@@ -214,7 +214,7 @@ public class Day5 {
                         var parts = Arrays.stream(line.split(" "))
                                 .mapToLong(Long::parseLong)
                                 .toArray();
-                        return new SegmentMap(parts[0], parts[1], parts[2]);
+                        return new Segment(parts[0], parts[1], parts[2]);
                     })
                     .toList();
             return new Map(name, ranges);
@@ -298,7 +298,7 @@ public class Day5 {
     /*
     --- Part Two ---
     Everyone will starve if you only plant such a small number of seeds. Re-reading the almanac,
-    it looks like the seeds: line actually describes segmentMaps of seed numbers.
+    it looks like the seeds: line actually describes segments of seed numbers.
 
     The values on the initial seeds: line come in pairs. Within each pair, the first value is the
     start of the range and the second value is the length of the range. So, in the first line of
@@ -306,7 +306,7 @@ public class Day5 {
 
     seeds: 79 14 55 13
 
-    This line describes two segmentMaps of seed numbers to be planted in the garden. The first range
+    This line describes two segments of seed numbers to be planted in the garden. The first range
     starts with seed number 79 and contains 14 values: 79, 80, ..., 91, 92. The second range
     starts with seed number 55 and contains 13 values: 55, 56, ..., 66, 67.
 
@@ -316,7 +316,7 @@ public class Day5 {
     corresponds to soil 84, fertilizer 84, water 84, light 77, temperature 45, humidity 46, and
     location 46. So, the lowest location number is 46.
 
-    Consider all of the initial seed numbers listed in the segmentMaps on the first line of the
+    Consider all of the initial seed numbers listed in the segments on the first line of the
     almanac. What is the lowest location number that corresponds to any of the initial seed numbers?
      */
 

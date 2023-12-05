@@ -89,100 +89,100 @@ class Day5Test {
     }
 
     @Test
-    @DisplayName("minLocation a covered range")
+    @DisplayName("transformCovered a range")
     void test11() {
         var input = new Range(2, 3);
-        var segment = new SegmentMap(4, 1, 8);
+        var segment = new Segment(4, 1, 8);
         var expected = new Range(5, 3);
         assertEquals(expected, segment.transformCovered(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range containning the segment")
+    @DisplayName("segment.transform - a range containning the segment")
     void test12() {
         var input = new Range(1, 11);
-        var segment = new SegmentMap(20, 5, 3);
+        var segment = new Segment(20, 5, 3);
         var expected = new Coverage(List.of(new Range(20, 3)),
                 List.of(new Range(1, 4), new Range(8, 4)));
         assertEquals(expected, segment.transform(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range to the left")
+    @DisplayName("segment.transform - a range to the left")
     void test13() {
         var input = new Range(1, 3);
-        var segment = new SegmentMap(20, 5, 3);
+        var segment = new Segment(20, 5, 3);
         var expected = new Coverage(List.of(), List.of(new Range(1, 3)));
         assertEquals(expected, segment.transform(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range touching the left")
+    @DisplayName("segment.transform - a range touching the left")
     void test14() {
         var input = new Range(1, 4);
-        var segment = new SegmentMap(20, 5, 3);
+        var segment = new Segment(20, 5, 3);
         var expected = new Coverage(List.of(), List.of(new Range(1, 4)));
         assertEquals(expected, segment.transform(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range touching the right")
+    @DisplayName("segment.transform - a range touching the right")
     void test15() {
         var input = new Range(8, 4);
-        var segment = new SegmentMap(20, 5, 3);
+        var segment = new Segment(20, 5, 3);
         var expected = new Coverage(List.of(), List.of(new Range(8, 4)));
         assertEquals(expected, segment.transform(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range to the right")
+    @DisplayName("segment.transform - a range to the right")
     void test16() {
         var input = new Range(10, 4);
-        var segment = new SegmentMap(20, 5, 3);
+        var segment = new Segment(20, 5, 3);
         var expected = new Coverage(List.of(), List.of(new Range(10, 4)));
         assertEquals(expected, segment.transform(input));
     }
     @Test
-    @DisplayName("segmentMap.transformCovered - a range fully contained at beginning")
+    @DisplayName("segment.transform - a range fully contained at beginning")
     void test17() {
         var input = new Range(5, 3);
-        var segment = new SegmentMap(20, 5, 8);
+        var segment = new Segment(20, 5, 8);
         var expected = new Coverage(List.of(new Range(20, 3)), List.of());
         assertEquals(expected, segment.transform(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range fully contained in the middle")
+    @DisplayName("segment.transform - a range fully contained in the middle")
     void test18() {
         var input = new Range(8, 3);
-        var segment = new SegmentMap(20, 5, 8);
+        var segment = new Segment(20, 5, 8);
         var expected = new Coverage(List.of(new Range(23, 3)), List.of());
         assertEquals(expected, segment.transform(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range fully contained at end")
+    @DisplayName("segment.transform - a range fully contained at end")
     void test19() {
         var input = new Range(10, 3);
-        var segment = new SegmentMap(20, 5, 8);
+        var segment = new Segment(20, 5, 8);
         var expected = new Coverage(List.of(new Range(25, 3)), List.of());
         assertEquals(expected, segment.transform(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range intersecting to the left")
+    @DisplayName("segment.transform - a range intersecting to the left")
     void test20() {
         var input = new Range(1, 8);
-        var segment = new SegmentMap(20, 5, 8);
+        var segment = new Segment(20, 5, 8);
         var expected = new Coverage(List.of(new Range(20, 4)), List.of(new Range(1, 4)) );
         assertEquals(expected, segment.transform(input));
     }
 
     @Test
-    @DisplayName("segmentMap.transformCovered - a range intersecting to the right")
+    @DisplayName("segment.transform - a range intersecting to the right")
     void test21() {
         var input = new Range(12, 10);
-        var segment = new SegmentMap(20, 5, 15);
+        var segment = new Segment(20, 5, 15);
         var expected = new Coverage(List.of(new Range(27, 8)), List.of(new Range(20, 2)) );
         assertEquals(expected, segment.transform(input));
     }
