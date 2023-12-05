@@ -2,10 +2,12 @@ package aoc2023.day5;
 
 import aoc2023.utils.IO;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.LongUnaryOperator;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 public class Day5 {
 
@@ -79,7 +81,8 @@ public class Day5 {
     water to use with which fertilizer, and so on.
 
     Rather than list every source number and its corresponding destination number one by one, the
-    maps describe entire ranges of numbers that can be converted. Each line within a map contains
+    maps describe entire segmentMaps of numbers that can be converted. Each line within a map
+    contains
     three numbers: the destination range start, the source range start, and the range length.
 
     Consider again the example seed-to-soil map:
@@ -128,6 +131,7 @@ public class Day5 {
     Seed 14, soil 14, fertilizer 53, water 49, light 42, temperature 42, humidity 43, location 43.
     Seed 55, soil 57, fertilizer 57, water 53, light 46, temperature 82, humidity 82, location 86.
     Seed 13, soil 13, fertilizer 52, water 41, light 34, temperature 34, humidity 35, location 35.
+
     So, the lowest location number in this example is 35.
 
     What is the lowest location number that corresponds to any of the initial seed numbers?
@@ -135,28 +139,69 @@ public class Day5 {
     Your puzzle answer was 825516882.
     */
 
-    record Range(long destinationStart, long sourceStart, long length) implements LongUnaryOperator {
+    record SegmentMap(long destinationStart, long sourceStart,
+                      long length) {
+
         boolean isInRange(long value) {
             return sourceStart <= value && value < sourceStart + length;
         }
 
-        @Override
-        public long applyAsLong(long operand) {
-            if (isInRange(operand)) {
-                return destinationStart + operand - sourceStart;
+        public long transform(long input) {
+            if (isInRange(input)) {
+                return destinationStart + input - sourceStart;
             }
-            return operand;
+            return input;
+        }
+
+        public Coverage transform(Range input) {
+            var segment = new Range(sourceStart, length);
+            var coverage = segment.coverage(input);
+            var covered =
+                    coverage.covered().stream().map(this::transformCovered).collect(Collectors.toSet());
+            return new Coverage(covered, coverage.uncovered());
+        }
+
+        public Range transformCovered(Range coveredRange) {
+            var delta = destinationStart - sourceStart;
+            return new Range(coveredRange.start + delta, coveredRange.length);
         }
     }
 
-    record Map(String name, List<Range> ranges) implements LongUnaryOperator {
-        @Override
-        public long applyAsLong(long operand) {
-            return ranges.stream()
-                    .filter(r -> r.isInRange(operand))
-                    .mapToLong(r -> r.applyAsLong(operand))
+    record Map(String name,
+               List<SegmentMap> segmentMaps) {
+
+        public long transform(long value) {
+            return segmentMaps.stream()
+                    .filter(r -> r.isInRange(value))
+                    .mapToLong(r -> r.transform(value))
                     .findFirst()
-                    .orElse(operand);
+                    .orElse(value);
+        }
+
+        public Set<Range> transform(Set<Range> input) {
+            var result = new HashSet<Range>();
+            transform(input, 0, result);
+            return result;
+
+        }
+
+        public void transform(Set<Range> inputs, int from, Set<Range> result) {
+            for (var input : inputs) {
+                transform(input, from, result);
+            }
+        }
+
+        public void transform(Range input, int from, Set<Range> result) {
+            if (from >= segmentMaps.size())
+                return;
+            Set<Range> uncovered = Set.of();
+            for (var segment : segmentMaps.subList(from, segmentMaps.size())) {
+                var coverage = segment.transform(input);
+                uncovered = coverage.uncovered();
+                result.addAll(coverage.covered());
+                transform(uncovered, from + 1, result);
+            }
+            result.addAll(uncovered);
         }
 
         static Map parseMap(String name, List<String> data) {
@@ -165,39 +210,55 @@ public class Day5 {
                         var parts = Arrays.stream(line.split(" "))
                                 .mapToLong(Long::parseLong)
                                 .toArray();
-                        return new Range(parts[0], parts[1], parts[2]);
+                        return new SegmentMap(parts[0], parts[1], parts[2]);
                     })
                     .toList();
             return new Map(name, ranges);
         }
-    }
 
-    record Almanac(List<Map> maps) implements LongUnaryOperator {
-        @Override
-        public long applyAsLong(long operand) {
-            var composition = maps.stream()
-                    .map(m -> (LongUnaryOperator) m)
-                    .reduce(LongUnaryOperator.identity(), LongUnaryOperator::andThen);
-            return composition.applyAsLong(operand);
+        LongUnaryOperator asLongUnaryOperator() {
+            return this::transform;
+        }
+
+        UnaryOperator<Set<Range>> asUnaryOperator() {
+            return this::transform;
         }
     }
 
-    record Seeds(List<Long> seeds) {
+    record Almanac(List<Map> maps) {
+
+        public long transform(long input) {
+            var composition = maps.stream()
+                    .map(Map::asLongUnaryOperator)
+                    .reduce(LongUnaryOperator.identity(), LongUnaryOperator::andThen);
+            return composition.applyAsLong(input);
+        }
+
+        public Set<Range> transform(Set<Range> input) {
+            var composition = maps.stream()
+                    .map(Map::asUnaryOperator)
+                    .reduce(UnaryOperator.identity(), (m1, m2) -> s -> m2.apply(m1.apply(s)));
+            return composition.apply(input);
+        }
+    }
+
+    record Seeds(Set<Long> seeds) {
         static Seeds parse(String line) {
             var numbers = line.replace("seeds: ", "").split(" ");
             var seeds = Arrays.stream(numbers)
                     .map(Long::parseLong)
-                    .toList();
+                    .collect(Collectors.toSet());
             return new Seeds(seeds);
         }
     }
 
-    record Day5Input(Seeds seeds, Almanac almanac) {
-        static Day5Input parse(List<String> data) {
+    record Day5InputPart1(Seeds seeds, Almanac almanac) {
+        static Day5InputPart1 parse(List<String> data) {
             var seedsLine = data.get(0);
             var seeds = Seeds.parse(seedsLine);
 
-            var mapsData = data.subList(2, data.size()); // Skip the first two lines ("seeds:" and blank line)
+            var mapsData = data.subList(2, data.size()); // Skip the first two lines ("seeds:"
+            // and blank line)
             var maps = new ArrayList<Map>();
             var currentMapData = new ArrayList<String>();
             var currentMapName = "";
@@ -217,14 +278,14 @@ public class Day5 {
                 maps.add(Map.parseMap(currentMapName, currentMapData));
             }
 
-            return new Day5Input(seeds, new Almanac(maps));
+            return new Day5InputPart1(seeds, new Almanac(maps));
         }
     }
 
     long part1(List<String> data) {
-        var input = Day5Input.parse(data);
+        var input = Day5InputPart1.parse(data);
         return input.seeds.seeds.stream()
-                .mapToLong(input.almanac::applyAsLong)
+                .mapToLong(input.almanac::transform)
                 .min()
                 .orElseThrow();
     }
@@ -232,7 +293,7 @@ public class Day5 {
     /*
     --- Part Two ---
     Everyone will starve if you only plant such a small number of seeds. Re-reading the almanac,
-    it looks like the seeds: line actually describes ranges of seed numbers.
+    it looks like the seeds: line actually describes segmentMaps of seed numbers.
 
     The values on the initial seeds: line come in pairs. Within each pair, the first value is the
     start of the range and the second value is the length of the range. So, in the first line of
@@ -240,7 +301,7 @@ public class Day5 {
 
     seeds: 79 14 55 13
 
-    This line describes two ranges of seed numbers to be planted in the garden. The first range
+    This line describes two segmentMaps of seed numbers to be planted in the garden. The first range
     starts with seed number 79 and contains 14 values: 79, 80, ..., 91, 92. The second range
     starts with seed number 55 and contains 13 values: 55, 56, ..., 66, 67.
 
@@ -250,12 +311,113 @@ public class Day5 {
     corresponds to soil 84, fertilizer 84, water 84, light 77, temperature 45, humidity 46, and
     location 46. So, the lowest location number is 46.
 
-    Consider all of the initial seed numbers listed in the ranges on the first line of the
+    Consider all of the initial seed numbers listed in the segmentMaps on the first line of the
     almanac. What is the lowest location number that corresponds to any of the initial seed numbers?
      */
 
-    int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+    record Coverage(Set<Range> covered, Set<Range> uncovered) {
+
+    }
+
+    record Range(long start, long length) {
+
+        boolean nonEmpty() {
+            return length > 0;
+        }
+
+        boolean isLeftOf(Range other) {
+            return start <= other.start;
+        }
+
+        Coverage coverage(Range other) {
+            if (!overlaps(other)) {
+                return new Coverage(Set.of(), Set.of(other));
+            } else if (contains(other)) {
+                return new Coverage(Set.of(other), Set.of());
+            }
+            return new Coverage(covered(other), notCovered(other));
+        }
+
+        private Set<Range> covered(Range other) {
+            var start = Math.max(this.start, other.start);
+            var end = Math.min(this.start + length, other.start + other.length);
+            return Set.of(new Range(start, end - start));
+        }
+
+        private Set<Range> notCovered(Range other) {
+            if (isLeftOf(other)) {
+                return Stream.of(new Range(other.start, start - other.start),
+                                new Range(start + length,
+                                        other.start + other.length - start - length))
+                        .filter(Range::nonEmpty).collect(Collectors.toSet());
+            }
+            return Stream.of(new Range(other.start, start - other.start),
+                            new Range(start + length,
+                                    other.start + other.length - start - length))
+                    .filter(Range::nonEmpty).collect(Collectors.toSet());
+
+        }
+
+        private boolean contains(Range other) {
+            return start <= other.start && other.start + other.length <= start + length;
+        }
+
+        private boolean overlaps(Range other) {
+            return start <= other.start && other.start < start + length
+                    || other.start <= start && start < other.start + other.length;
+        }
+    }
+
+    record SeedRanges(Set<Range> ranges) {
+        static SeedRanges parse(String line) {
+            var numbers = line.replace("seeds: ", "").split(" ");
+            var ranges = new HashSet<Range>();
+            for (int i = 0; i < numbers.length; i += 2) {
+                var start = Long.parseLong(numbers[i]);
+                var length = Long.parseLong(numbers[i + 1]);
+                ranges.add(new Range(start, length));
+            }
+            return new SeedRanges(ranges);
+        }
+    }
+
+    record Day5InputPart2(SeedRanges seeds, Almanac almanac) {
+        static Day5InputPart2 parse(List<String> data) {
+            var seedsLine = data.get(0);
+            var seeds = SeedRanges.parse(seedsLine);
+
+            var mapsData = data.subList(2, data.size()); // Skip the first two lines ("seeds:"
+            // and blank line)
+            var maps = new ArrayList<Map>();
+            var currentMapData = new ArrayList<String>();
+            var currentMapName = "";
+
+            for (var line : mapsData) {
+                if (line.isBlank()) {
+                    maps.add(Map.parseMap(currentMapName, currentMapData));
+                    currentMapData.clear();
+                } else if (line.endsWith("map:")) {
+                    currentMapName = line.replace(" map:", "");
+                } else {
+                    currentMapData.add(line);
+                }
+            }
+            // Don't forget to parse the last map
+            if (!currentMapData.isEmpty()) {
+                maps.add(Map.parseMap(currentMapName, currentMapData));
+            }
+
+            return new Day5InputPart2(seeds, new Almanac(maps));
+        }
+    }
+
+    long part2(List<String> data) {
+        var parsed = Day5InputPart2.parse(data);
+        var segments = parsed.almanac().transform(parsed.seeds().ranges());
+        return segments.stream()
+                .mapToLong(Range::start)
+                .min()
+                .orElseThrow();
     }
 
     public static void main(String[] args) {
@@ -263,7 +425,7 @@ public class Day5 {
         var data = IO.getResourceAsList("day5.txt");
         var part1 = day5.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day5.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day5.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
