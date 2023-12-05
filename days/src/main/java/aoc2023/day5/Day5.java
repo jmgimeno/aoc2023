@@ -5,8 +5,6 @@ import aoc2023.utils.IO;
 import java.util.*;
 import java.util.function.LongUnaryOperator;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 public class Day5 {
@@ -146,19 +144,36 @@ public class Day5 {
             return sourceStart <= value && value < sourceStart + length;
         }
 
-        public long transform(long input) {
-            if (isInRange(input)) {
-                return destinationStart + input - sourceStart;
-            }
-            return input;
+        public long transformCovered(long input) {
+            return destinationStart + input - sourceStart;
         }
 
         public Coverage transform(Range input) {
-            var segment = new Range(sourceStart, length);
-            var coverage = segment.coverage(input);
-            var covered =
-                    coverage.covered().stream().map(this::transformCovered).collect(Collectors.toSet());
-            return new Coverage(covered, coverage.uncovered());
+            var sourceEnd = sourceStart + length;
+            var inputEnd = input.start + input.length;
+            if (inputEnd <= sourceStart || sourceEnd <= input.start) {
+                // No overlap
+                return new Coverage(List.of(), List.of(input));
+            } else if (sourceStart <= input.start && inputEnd <= sourceEnd) {
+                // Input is contained in the segment
+                return new Coverage(List.of(transformCovered(input)), List.of());
+            } else if (input.start <= sourceStart && sourceEnd <= inputEnd) {
+                // Segment is contained in the input
+                var left = new Range(input.start, sourceStart - input.start);
+                var covered = new Range(sourceStart, length);
+                var right = new Range(sourceEnd, inputEnd - sourceEnd);
+                return new Coverage(List.of(transformCovered(covered)), List.of(left, right));
+            } else if (input.start <= sourceStart) {
+                // Segment overlaps on the right side of the input
+                var covered = new Range(sourceStart, inputEnd - sourceStart);
+                var uncovered = new Range(input.start, sourceStart - input.start);
+                return new Coverage(List.of(transformCovered(covered)), List.of(uncovered));
+            } else {
+                // Segment overlaps on the left side of the input
+                var covered = new Range(input.start, sourceEnd - input.start);
+                var uncovered = new Range(sourceEnd, inputEnd - sourceEnd);
+                return new Coverage(List.of(transformCovered(covered)), List.of(uncovered));
+            }
         }
 
         public Range transformCovered(Range coveredRange) {
@@ -173,35 +188,25 @@ public class Day5 {
         public long transform(long value) {
             return segmentMaps.stream()
                     .filter(r -> r.isInRange(value))
-                    .mapToLong(r -> r.transform(value))
+                    .mapToLong(r -> r.transformCovered(value))
                     .findFirst()
                     .orElse(value);
         }
 
-        public Set<Range> transform(Set<Range> input) {
-            var result = new HashSet<Range>();
-            transform(input, 0, result);
+        public List<Range> transform(List<Range> input) {
+            var unprocessed = new ArrayList<>(input);
+            var result = new ArrayList<Range>();
+            for (var segment : segmentMaps) {
+                var nextUnprocessed = new ArrayList<Range>();
+                for (var range : unprocessed) {
+                    var coverage = segment.transform(range);
+                    result.addAll(coverage.covered());
+                    nextUnprocessed.addAll(coverage.uncovered());
+                }
+                unprocessed = nextUnprocessed;
+            }
+            result.addAll(unprocessed);
             return result;
-
-        }
-
-        public void transform(Set<Range> inputs, int from, Set<Range> result) {
-            for (var input : inputs) {
-                transform(input, from, result);
-            }
-        }
-
-        public void transform(Range input, int from, Set<Range> result) {
-            if (from >= segmentMaps.size())
-                return;
-            Set<Range> uncovered = Set.of();
-            for (var segment : segmentMaps.subList(from, segmentMaps.size())) {
-                var coverage = segment.transform(input);
-                uncovered = coverage.uncovered();
-                result.addAll(coverage.covered());
-                transform(uncovered, from + 1, result);
-            }
-            result.addAll(uncovered);
         }
 
         static Map parseMap(String name, List<String> data) {
@@ -220,14 +225,14 @@ public class Day5 {
             return this::transform;
         }
 
-        UnaryOperator<Set<Range>> asUnaryOperator() {
+        UnaryOperator<List<Range>> asUnaryOperator() {
             return this::transform;
         }
     }
 
     record Almanac(List<Map> maps) {
 
-        public long transform(long input) {
+        public long minLocation(long input) {
             var composition = maps.stream()
                     .map(Map::asLongUnaryOperator)
                     .reduce(LongUnaryOperator.identity(), LongUnaryOperator::andThen);
@@ -238,17 +243,17 @@ public class Day5 {
             var composition = maps.stream()
                     .map(Map::asUnaryOperator)
                     .reduce(UnaryOperator.identity(), (m1, m2) -> s -> m2.apply(m1.apply(s)));
-            return composition.apply(Set.of(input)).stream().mapToLong(Range::start).min().orElseThrow();
+            return composition.apply(List.of(input)).stream().mapToLong(Range::start).min().orElseThrow();
         }
     }
 
-    record Seeds(Set<Long> seeds) {
+    record Seeds(List<Long> values) {
         static Seeds parse(String line) {
             var numbers = line.replace("seeds: ", "").split(" ");
-            var seeds = Arrays.stream(numbers)
+            var values = Arrays.stream(numbers)
                     .map(Long::parseLong)
-                    .collect(Collectors.toSet());
-            return new Seeds(seeds);
+                    .toList();
+            return new Seeds(values);
         }
     }
 
@@ -284,8 +289,8 @@ public class Day5 {
 
     long part1(List<String> data) {
         var input = Day5InputPart1.parse(data);
-        return input.seeds.seeds.stream()
-                .mapToLong(input.almanac::transform)
+        return input.seeds().values().stream()
+                .mapToLong(input.almanac()::minLocation)
                 .min()
                 .orElseThrow();
     }
@@ -315,57 +320,10 @@ public class Day5 {
     almanac. What is the lowest location number that corresponds to any of the initial seed numbers?
      */
 
-    record Coverage(Set<Range> covered, Set<Range> uncovered) {
-
+    record Coverage(List<Range> covered, List<Range> uncovered) {
     }
 
     record Range(long start, long length) {
-
-        boolean nonEmpty() {
-            return length > 0;
-        }
-
-        boolean isLeftOf(Range other) {
-            return start <= other.start;
-        }
-
-        Coverage coverage(Range other) {
-            if (!overlaps(other)) {
-                return new Coverage(Set.of(), Set.of(other));
-            } else if (contains(other)) {
-                return new Coverage(Set.of(other), Set.of());
-            }
-            return new Coverage(covered(other), notCovered(other));
-        }
-
-        private Set<Range> covered(Range other) {
-            var start = Math.max(this.start, other.start);
-            var end = Math.min(this.start + length, other.start + other.length);
-            return Set.of(new Range(start, end - start));
-        }
-
-        private Set<Range> notCovered(Range other) {
-            if (isLeftOf(other)) {
-                return Stream.of(new Range(other.start, start - other.start),
-                                new Range(start + length,
-                                        other.start + other.length - start - length))
-                        .filter(Range::nonEmpty).collect(Collectors.toSet());
-            }
-            return Stream.of(new Range(other.start, start - other.start),
-                            new Range(start + length,
-                                    other.start + other.length - start - length))
-                    .filter(Range::nonEmpty).collect(Collectors.toSet());
-
-        }
-
-        private boolean contains(Range other) {
-            return start <= other.start && other.start + other.length <= start + length;
-        }
-
-        private boolean overlaps(Range other) {
-            return start <= other.start && other.start < start + length
-                    || other.start <= start && start < other.start + other.length;
-        }
     }
 
     record SeedRanges(Set<Range> ranges) {
@@ -379,8 +337,6 @@ public class Day5 {
             }
             return new SeedRanges(ranges);
         }
-
-
     }
 
     record Day5InputPart2(SeedRanges seeds, Almanac almanac) {
@@ -414,9 +370,9 @@ public class Day5 {
     }
 
     long part2(List<String> data) {
-        var parsed = Day5InputPart2.parse(data);
-        return parsed.seeds().ranges().stream()
-                .mapToLong(parsed.almanac()::minLocation)
+        var input = Day5InputPart2.parse(data);
+        return input.seeds().ranges().stream()
+                .mapToLong(input.almanac()::minLocation)
                 .min()
                 .orElseThrow();
     }
