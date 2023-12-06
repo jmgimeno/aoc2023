@@ -89,13 +89,8 @@ public class Day6 {
         }
 
         long numRecords() {
-            if (maxTime % 2 == 0) {
-                long pos = binarySearch(0L, maxTime / 2L);
-                return 2 * (maxTime / 2L - pos) + 1;
-            } else {
-                long pos = binarySearch(0L, maxTime / 2L + 1);
-                return 2 * (maxTime / 2L + 1 - pos);
-            }
+            long pos = binarySearch(0L, maxTime / 2L + maxTime % 2L);
+            return 2 * (maxTime / 2L - pos) + 1 + maxTime % 2L;
         }
 
         private long binarySearch(long left, long right) {
