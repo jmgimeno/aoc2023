@@ -139,7 +139,6 @@ public class Day6 {
 
     long part2(Race data) {
         return data.numRecords();
-
     }
 
     public static void main(String[] args) {
