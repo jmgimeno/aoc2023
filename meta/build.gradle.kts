@@ -27,4 +27,5 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.withType<JavaExec>().configureEach {
     jvmArgs("--enable-preview")
     standardInput = System.`in`
+    workingDir = rootProject.projectDir
 }
