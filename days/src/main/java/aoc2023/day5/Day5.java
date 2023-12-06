@@ -159,24 +159,32 @@ public class Day5 {
                 return new Coverage(List.of(transformCovered(input)), List.of());
             } else if (input.start <= sourceStart && sourceEnd <= inputEnd) {
                 // Segment is contained in the input
+                var uncovered = new ArrayList<Range>();
                 var left = new Range(input.start, sourceStart - input.start);
+                if (left.length != 0) uncovered.add(left);
                 var covered = new Range(sourceStart, length);
                 var right = new Range(sourceEnd, inputEnd - sourceEnd);
-                return new Coverage(List.of(transformCovered(covered)), List.of(left, right));
+                if (right.length != 0) uncovered.add(right);
+                return new Coverage(List.of(transformCovered(covered)), uncovered);
             } else if (input.start <= sourceStart) {
                 // Segment overlaps on the right side of the input
+                var uncovered = new ArrayList<Range>();
                 var left = new Range(input.start, sourceStart - input.start);
+                if (left.length != 0) uncovered.add(left);
                 var covered = new Range(sourceStart, inputEnd - sourceStart);
-                return new Coverage(List.of(transformCovered(covered)), List.of(left));
+                return new Coverage(List.of(transformCovered(covered)), uncovered);
             } else {
                 // Segment overlaps on the left side of the input
+                var uncovered = new ArrayList<Range>();
                 var covered = new Range(input.start, sourceEnd - input.start);
                 var right = new Range(sourceEnd, inputEnd - sourceEnd);
-                return new Coverage(List.of(transformCovered(covered)), List.of(right));
+                if (right.length != 0) uncovered.add(right);
+                return new Coverage(List.of(transformCovered(covered)), uncovered);
             }
         }
 
         public Range transformCovered(Range input) {
+            assert input.length != 0;
             var delta = destinationStart - sourceStart;
             return new Range(input.start + delta, input.length);
         }
@@ -205,6 +213,7 @@ public class Day5 {
                 ranges = nextRanges;
             }
             result.addAll(ranges);
+            assert result.stream().allMatch(r -> r.length != 0);
             return result;
         }
 
@@ -318,6 +327,8 @@ public class Day5 {
 
     Consider all of the initial seed numbers listed in the segments on the first line of the
     almanac. What is the lowest location number that corresponds to any of the initial seed numbers?
+
+    Your puzzle answer was 136096660.
      */
 
     record Coverage(List<Range> covered, List<Range> uncovered) {
