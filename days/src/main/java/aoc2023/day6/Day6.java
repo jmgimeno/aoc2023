@@ -89,22 +89,21 @@ public class Day6 {
         }
 
         long numRecords() {
-            long pos = binarySearch(0L, maxTime / 2L + 1L);
-            return maxTime - 2 * pos + 1;
+            return maxTime - 2 * firstRecord() + 1;
         }
 
-        private long binarySearch(long left, long right) {
-            if (left == right) {
-                return left;
-            } else {
+        private long firstRecord() {
+            long left = 0L;
+            long right = maxTime / 2L + 1L;
+            while (left < right) {
                 long mid = left + (right - left) / 2L;
-                long distance = distance(mid);
-                if (distance <= recordDistance) {
-                    return binarySearch(mid + 1L, right);
+                if (distance(mid) <= recordDistance) {
+                    left = mid + 1L;
                 } else {
-                    return binarySearch(left, mid);
+                    right = mid;
                 }
             }
+            return left;
         }
     }
 
