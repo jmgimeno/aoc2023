@@ -6,14 +6,14 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
-
-import static java.lang.StringTemplate.STR;
 
 public class DayGenerator {
 
@@ -118,7 +118,7 @@ public class DayGenerator {
         // I'd want to scrape the instructions (the article tag) using jsoup and return
         // them as a string without tags.
         try {
-            String url = "https://adventofcode.com/2023/day/" + day;
+            String url = "https://adventofcode.com/2023/day/%d".formatted(day);
             Document doc = Jsoup.connect(url).get();
             Elements articleElements = doc.select("article");
             List<String> elements = new ArrayList<>();
@@ -165,22 +165,39 @@ public class DayGenerator {
         return formattedWords;
     }
 
-    static void generate(int day) throws IOException {
+
+    static void generate(int day) throws IOException, URISyntaxException {
         var mainPackage = Path.of("days/src/main/java/aoc2023/day%d".formatted(day));
         var testPackage = Path.of("days/src/test/java/aoc2023/day%d".formatted(day));
         if (mainPackage.toFile().mkdir() && testPackage.toFile().mkdir()) {
-            var instructions = getInstructionsForPart1(day);
-            var dayClass = mainPackage.resolve(Path.of("Day%d.java".formatted(day)));
-            var testClass = testPackage.resolve(Path.of("Day%dTest.java".formatted(day)));
-            Files.writeString(dayClass, generateProduction(day, instructions));
-            Files.writeString(testClass, generateTest(day));
+            writeMain(day, mainPackage);
+            writeTest(day, testPackage);
+            writeData(day);
             System.out.printf("Enjoy your newly created day %d%n", day);
         } else {
             System.out.printf("Sorry, day %d already exists%n", day);
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    private static void writeMain(int day, Path mainPackage) throws IOException {
+        var dayClass = mainPackage.resolve(Path.of("Day%d.java".formatted(day)));
+        var instructions = getInstructionsForPart1(day);
+        Files.writeString(dayClass, generateProduction(day, instructions));
+    }
+
+    private static void writeTest(int day, Path testPackage) throws IOException {
+        var testClass = testPackage.resolve(Path.of("Day%dTest.java".formatted(day)));
+        Files.writeString(testClass, generateTest(day));
+    }
+
+    private static void writeData(int day) throws IOException, URISyntaxException {
+        var resourcesDir = Path.of("days/src/main/resources");
+        var inputFile = resourcesDir.resolve(Path.of("day%d.txt".formatted(day)));
+        var url = "https://adventofcode.com/2023/day/%d/input".formatted(day);
+        Files.copy(new URI(url).toURL().openStream(), inputFile);
+    }
+
+    public static void main(String[] args) throws IOException, URISyntaxException {
         var scanner = new Scanner(System.in);
         System.out.print("Which day do you want to generate? ");
         var day = scanner.nextInt();
