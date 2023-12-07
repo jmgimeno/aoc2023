@@ -6,8 +6,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -166,13 +164,12 @@ public class DayGenerator {
     }
 
 
-    static void generate(int day) throws IOException, URISyntaxException {
+    static void generate(int day) throws IOException {
         var mainPackage = Path.of("days/src/main/java/aoc2023/day%d".formatted(day));
         var testPackage = Path.of("days/src/test/java/aoc2023/day%d".formatted(day));
         if (mainPackage.toFile().mkdir() && testPackage.toFile().mkdir()) {
             writeMain(day, mainPackage);
             writeTest(day, testPackage);
-            writeData(day);
             System.out.printf("Enjoy your newly created day %d%n", day);
         } else {
             System.out.printf("Sorry, day %d already exists%n", day);
@@ -190,14 +187,7 @@ public class DayGenerator {
         Files.writeString(testClass, generateTest(day));
     }
 
-    private static void writeData(int day) throws IOException, URISyntaxException {
-        var resourcesDir = Path.of("days/src/main/resources");
-        var inputFile = resourcesDir.resolve(Path.of("day%d.txt".formatted(day)));
-        var url = "https://adventofcode.com/2023/day/%d/input".formatted(day);
-        Files.copy(new URI(url).toURL().openStream(), inputFile);
-    }
-
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    public static void main(String[] args) throws IOException {
         var scanner = new Scanner(System.in);
         System.out.print("Which day do you want to generate? ");
         var day = scanner.nextInt();
