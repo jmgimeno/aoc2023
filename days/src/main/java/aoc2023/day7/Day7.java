@@ -6,8 +6,8 @@ import com.google.common.collect.Streams;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
-import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -100,21 +100,41 @@ public class Day7 {
     */
 
     record Hand(String cards, int bid, HandType type) {
-        static Hand parse(String line) {
+        static Hand parse1(String line) {
             var parts = line.split(" ");
-            return new Hand(parts[0], Integer.parseInt(parts[1]), classify(parts[0]));
+            return new Hand(parts[0], Integer.parseInt(parts[1]), classifyWithoutJokers(parts[0]));
         }
 
-        static HandType classify(String cards) {
-            // count chars in the cards
-            var counts = cards.chars()
+        static Hand parse2(String line) {
+            var parts = line.split(" ");
+            return new Hand(parts[0], Integer.parseInt(parts[1]), classifyWithJokers(parts[0]));
+        }
+
+        static HandType classifyWithoutJokers(String cards) {
+            return classify(cards, false);
+        }
+
+        static HandType classifyWithJokers(String cards) {
+            return classify(cards, true);
+        }
+
+        private static HandType classify(String cards, boolean withJokers) {
+            var counts = countCards(cards);
+            var jokerCount = counts.getOrDefault('J', 0L);
+            if (!withJokers || jokerCount == 0L || jokerCount == 5L) {
+                return getRawHandType(counts.values(), 5);
+            } else {
+                counts.remove('J');
+                return getJokerizedHandType(counts.values(), jokerCount.intValue());
+            }
+        }
+        private static Map<Character, Long> countCards(String cards) {
+            return cards.chars()
                     .boxed()
-                    .collect(groupingBy(identity(), counting()));
-            var counters = counts.values();
-            return getHandType(counters, 5);
+                    .collect(groupingBy(i -> (char) i.intValue(), counting()));
         }
 
-        private static HandType getHandType(Collection<Long> counters, int maxCards) {
+        private static HandType getRawHandType(Collection<Long> counters, int maxCards) {
             if (counters.contains(5L)) {
                 return HandType.FIVE_OF_A_KIND;
             } else if (counters.contains(4L)) {
@@ -132,7 +152,52 @@ public class Day7 {
             }
         }
 
-        static int compareCards(String cardOrder, String cards1, String cards2) {
+        private static HandType getJokerizedHandType(Collection<Long> counters, int jokerCount) {
+            HandType typeWithoutJokerCards = getRawHandType(counters, 5 - jokerCount);
+            return switch (typeWithoutJokerCards) {
+                case HIGH_CARD -> {
+                    if (jokerCount == 1)
+                        yield HandType.ONE_PAIR;
+                    else if (jokerCount == 2)
+                        yield HandType.THREE_OF_A_KIND;
+                    else if (jokerCount == 3)
+                        yield HandType.FOUR_OF_A_KIND;
+                    else if (jokerCount == 4)
+                        yield HandType.FIVE_OF_A_KIND;
+                    throw new IllegalStateException("More than four jokers in high card");
+                }
+                case ONE_PAIR -> {
+                    if (jokerCount == 1)
+                        yield HandType.THREE_OF_A_KIND;
+                    else if (jokerCount == 2)
+                        yield HandType.FOUR_OF_A_KIND;
+                    else if (jokerCount == 3)
+                        yield HandType.FIVE_OF_A_KIND;
+                    throw new IllegalStateException("More than three jokers in one pair");
+                }
+                case TWO_PAIR -> {
+                    if (jokerCount == 1)
+                        yield HandType.FULL_HOUSE;
+                    throw new IllegalStateException("More than two jokers in two pair");
+                }
+                case THREE_OF_A_KIND -> {
+                    if (jokerCount == 1)
+                        yield HandType.FOUR_OF_A_KIND;
+                    else if (jokerCount == 2)
+                        yield HandType.FIVE_OF_A_KIND;
+                    throw new IllegalStateException("More than two jokers in three of a kind");
+                }
+                case FULL_HOUSE -> throw new IllegalStateException("Joker in full house");
+                case FOUR_OF_A_KIND -> {
+                    if (jokerCount == 1)
+                        yield HandType.FIVE_OF_A_KIND;
+                    throw new IllegalStateException("More than two jokers in three of a kind");
+                }
+                case FIVE_OF_A_KIND -> throw new IllegalStateException("Joker in five of a kind");
+            };
+        }
+
+        private static int compareCards(String cardOrder, String cards1, String cards2) {
             int i = 0;
             while (i < cards1.length() && i < cards2.length()) {
                 var c1 = cards1.charAt(i);
@@ -144,59 +209,6 @@ public class Day7 {
                 i++;
             }
             return 0;
-        }
-
-        public Hand jokerize() {
-            var counts = cards.chars()
-                    .boxed()
-                    .collect(groupingBy(identity(), counting()));
-            var jokerCount = counts.remove(Integer.valueOf('J'));
-            if (jokerCount == null || jokerCount == 5L) {
-                return this;
-            }
-            var jokerized = switch (getHandType(counts.values(), 5 - jokerCount.intValue())) {
-                case HIGH_CARD -> {
-                    if (jokerCount == 1)
-                        yield new Hand(cards, bid, HandType.ONE_PAIR);
-                    else if (jokerCount == 2)
-                        yield new Hand(cards, bid, HandType.THREE_OF_A_KIND);
-                    else if (jokerCount == 3)
-                        yield new Hand(cards, bid, HandType.FOUR_OF_A_KIND);
-                    else if (jokerCount == 4)
-                        yield new Hand(cards, bid, HandType.FIVE_OF_A_KIND);
-                    throw new IllegalStateException("More than four jokers in high card");
-                }
-                case ONE_PAIR -> {
-                    if (jokerCount == 1)
-                        yield new Hand(cards, bid, HandType.THREE_OF_A_KIND);
-                    else if (jokerCount == 2)
-                        yield new Hand(cards, bid, HandType.FOUR_OF_A_KIND);
-                    else if (jokerCount == 3)
-                        yield new Hand(cards, bid, HandType.FIVE_OF_A_KIND);
-                    throw new IllegalStateException("More than three jokers in one pair");
-                }
-                case TWO_PAIR -> {
-                    if (jokerCount == 1)
-                        yield new Hand(cards, bid, HandType.FULL_HOUSE);
-                    throw new IllegalStateException("More than two jokers in two pair");
-                }
-                case THREE_OF_A_KIND -> {
-                    if (jokerCount == 1)
-                        yield new Hand(cards, bid, HandType.FOUR_OF_A_KIND);
-                    else if (jokerCount == 2)
-                        yield new Hand(cards, bid, HandType.FIVE_OF_A_KIND);
-                    throw new IllegalStateException("More than two jokers in three of a kind");
-                }
-                case FULL_HOUSE -> throw new IllegalStateException("Joker in full house");
-                case FOUR_OF_A_KIND -> {
-                    if (jokerCount == 1)
-                        yield new Hand(cards, bid, HandType.FIVE_OF_A_KIND);
-                    throw new IllegalStateException("More than two jokers in three of a kind");
-                }
-                case FIVE_OF_A_KIND -> throw new IllegalStateException("Joker in five of a kind");
-            };
-            System.out.printf("%s -> %s%n", this, jokerized);
-            return jokerized;
         }
 
         static class HandComparatorPart1 implements Comparator<Hand> {
@@ -240,7 +252,7 @@ public class Day7 {
     long part1(List<String> data) {
 
         var hands = data.stream()
-                .map(Hand::parse)
+                .map(Hand::parse1)
                 .sorted(new Hand.HandComparatorPart1())
                 .toList();
 
@@ -288,8 +300,7 @@ public class Day7 {
     long part2(List<String> data) {
 
         var hands = data.stream()
-                .map(Hand::parse)
-                .map(Hand::jokerize)
+                .map(Hand::parse2)
                 .sorted(new Hand.HandComparatorPart2())
                 .toList();
 

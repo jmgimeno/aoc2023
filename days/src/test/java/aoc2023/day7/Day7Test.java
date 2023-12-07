@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static aoc2023.day7.Day7.Hand.classifyWithJokers;
+import static aoc2023.day7.Day7.Hand.classifyWithoutJokers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class Day7Test {
@@ -54,76 +56,68 @@ class Day7Test {
     @Test
     @DisplayName("sort hands part 1")
     void test5() {
-        var h_32T3K = Hand.parse("32T3K 765");
-        var h_T55J5 = Hand.parse("T55J5 684");
-        var h_KK677 = Hand.parse("KK677 28");
-        var h_KTJJT = Hand.parse("KTJJT 220");
-        var h_QQQJA = Hand.parse("QQQJA 483");
-        var list = new ArrayList<>(List.of(h_32T3K, h_T55J5, h_KK677, h_KTJJT, h_QQQJA));
-        list.sort(new Hand.HandComparatorPart1());
-        assertEquals(List.of(h_32T3K, h_KTJJT, h_KK677, h_T55J5, h_QQQJA), list);
+        var h_32T3K = Hand.parse1("32T3K 765");
+        var h_T55J5 = Hand.parse1("T55J5 684");
+        var h_KK677 = Hand.parse1("KK677 28");
+        var h_KTJJT = Hand.parse1("KTJJT 220");
+        var h_QQQJA = Hand.parse1("QQQJA 483");
+        var hands = new ArrayList<>(List.of(h_32T3K, h_T55J5, h_KK677, h_KTJJT, h_QQQJA));
+        hands.sort(new Hand.HandComparatorPart1());
+        assertEquals(List.of(h_32T3K, h_KTJJT, h_KK677, h_T55J5, h_QQQJA), hands);
     }
 
     @Test
-    @DisplayName("jokerize 32T3K")
+    @DisplayName("classify 32T3K")
     void test6() {
-        var h_32T3K = new Hand("32T3K", 765, HandType.HIGH_CARD);
-        var j_32T3K = new Hand("32T3K", 765, HandType.HIGH_CARD);
-        assertEquals(j_32T3K, h_32T3K.jokerize());
+        assertEquals(HandType.ONE_PAIR, classifyWithoutJokers("32T3K"));
+        assertEquals(HandType.ONE_PAIR, classifyWithoutJokers("32T3K"));
     }
 
     @Test
-    @DisplayName("jokerize T55J5")
+    @DisplayName("classify T55J5")
     void test7() {
-        var h_T55J5 = new Hand("T55J5", 684, HandType.THREE_OF_A_KIND);
-        var j_T55J5 = new Hand("T55J5", 684, HandType.FOUR_OF_A_KIND);
-        assertEquals(j_T55J5, h_T55J5.jokerize());
+        assertEquals(HandType.THREE_OF_A_KIND, classifyWithoutJokers("T55J5"));
+        assertEquals(HandType.FOUR_OF_A_KIND, classifyWithJokers("T55J5"));
     }
 
     @Test
-    @DisplayName("jokerize KK677")
+    @DisplayName("classify KK677")
     void test8() {
-        var h_KK677 = new Hand("KK677", 28, HandType.TWO_PAIR);
-        var j_KK677 = new Hand("KK677", 28, HandType.TWO_PAIR);
-        assertEquals(j_KK677, h_KK677.jokerize());
+        assertEquals(HandType.TWO_PAIR, classifyWithoutJokers("KK677"));
+        assertEquals(HandType.TWO_PAIR, classifyWithJokers("KK677"));
     }
 
     @Test
-    @DisplayName("jokerize KTJJT")
+    @DisplayName("classify KTJJT")
     void test9() {
-        var h_KTJJT = new Hand("KTJJT", 220, HandType.TWO_PAIR);
-        var j_KTJJT = new Hand("KTJJT", 220, HandType.FOUR_OF_A_KIND);
-        assertEquals(j_KTJJT, h_KTJJT.jokerize());
+        assertEquals(HandType.TWO_PAIR, classifyWithoutJokers("KTJJT"));
+        assertEquals(HandType.FOUR_OF_A_KIND, classifyWithJokers("KTJJT"));
     }
 
     @Test
     @DisplayName("jokerize QQQJA")
     void test10() {
-        var h_QQQJA = new Hand("QQQJA", 483, HandType.THREE_OF_A_KIND);
-        var j_QQQJA = new Hand("QQQJA", 483, HandType.FOUR_OF_A_KIND);
-        assertEquals(j_QQQJA, h_QQQJA.jokerize());
+        assertEquals(HandType.THREE_OF_A_KIND, classifyWithoutJokers("QQQJA"));
+        assertEquals(HandType.FOUR_OF_A_KIND, classifyWithJokers("QQQJA"));
     }
 
     @Test
     @DisplayName("sort hands part 2")
     void test11() {
-        var h_32T3K = Hand.parse("32T3K 765");
-        var h_T55J5 = Hand.parse("T55J5 684");
-        var h_KK677 = Hand.parse("KK677 28");
-        var h_KTJJT = Hand.parse("KTJJT 220");
-        var h_QQQJA = Hand.parse("QQQJA 483");
-        var input = List.of(h_32T3K, h_T55J5, h_KK677, h_KTJJT, h_QQQJA);
-        var jokerized = new ArrayList<>(input.stream().map(Hand::jokerize).toList());
-        jokerized.sort(new Hand.HandComparatorPart2());
-        var cards = jokerized.stream().map(Hand::cards).toList();
-        assertEquals(List.of("32T3K", "KK677", "T55J5", "QQQJA", "KTJJT"), cards);
+        var h_32T3K = Hand.parse2("32T3K 765");
+        var h_T55J5 = Hand.parse2("T55J5 684");
+        var h_KK677 = Hand.parse2("KK677 28");
+        var h_KTJJT = Hand.parse2("KTJJT 220");
+        var h_QQQJA = Hand.parse2("QQQJA 483");
+        var hands = new ArrayList<>(List.of(h_32T3K, h_T55J5, h_KK677, h_KTJJT, h_QQQJA));
+        hands.sort(new Hand.HandComparatorPart2());
+        assertEquals(List.of(h_32T3K, h_KK677, h_T55J5, h_QQQJA, h_KTJJT), hands);
     }
 
     @Test
-    @DisplayName("jokerize JK336")
+    @DisplayName("classify JK336")
     void test12() {
-        var h_JK336 = new Hand("JK336", 894, HandType.ONE_PAIR);
-        var j_JK336 = new Hand("JK336", 894, HandType.THREE_OF_A_KIND);
-        assertEquals(j_JK336, h_JK336.jokerize());
+        assertEquals(HandType.ONE_PAIR, classifyWithoutJokers("JK336"));
+        assertEquals(HandType.THREE_OF_A_KIND, classifyWithJokers("JK336"));
     }
 }
