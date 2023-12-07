@@ -62,7 +62,7 @@ class Day7Test {
         var h_KTJJT = Hand.parse("KTJJT 220");
         var h_QQQJA = Hand.parse("QQQJA 483");
         var list = new ArrayList<>(List.of(h_32T3K, h_T55J5, h_KK677, h_KTJJT, h_QQQJA));
-        list.sort(Hand::compareTo);
+        list.sort(new Hand.HandComparatorPart1());
         assertEquals(List.of(h_32T3K, h_KTJJT, h_KK677, h_T55J5, h_QQQJA), list);
     }
 }

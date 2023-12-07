@@ -97,7 +97,7 @@ public class Day7 {
     Your puzzle answer was 248422077.
     */
 
-    record Hand(String cards, int bid, HandType type) implements Comparable<Hand> {
+    record Hand(String cards, int bid, HandType type) {
         static Hand parse(String line) {
             var parts = line.split(" ");
             return new Hand(parts[0], Integer.parseInt(parts[1]), classify(parts[0]));
@@ -126,8 +126,7 @@ public class Day7 {
             }
         }
 
-        static int compare(String cards1, String cards2) {
-            var cardOrder = "23456789TJQKA";
+        static int compareCards(String cardOrder, String cards1, String cards2) {
             int i = 0;
             while (i < cards1.length() && i < cards2.length()) {
                 var c1 = cards1.charAt(i);
@@ -141,12 +140,17 @@ public class Day7 {
             return 0;
         }
 
-        @Override
-        public int compareTo(Hand o) {
-            var byHandType = type.compareTo(o.type);
-            if (byHandType != 0)
-                return byHandType;
-            return compare(cards, o.cards);
+        static class HandComparatorPart1 implements java.util.Comparator<Hand> {
+
+            String cardOrder = "23456789TJQKA";
+
+            @Override
+            public int compare(Hand o1, Hand o2) {
+                var byHandType = o1.type.compareTo(o2.type);
+                if (byHandType != 0)
+                    return byHandType;
+                return compareCards(cardOrder, o1.cards, o2.cards);
+            }
         }
     }
 
@@ -161,7 +165,7 @@ public class Day7 {
     }
 
     long part1(List<String> data) {
-        var hands = data.stream().map(Hand::parse).sorted().toList();
+        var hands = data.stream().map(Hand::parse).sorted(new Hand.HandComparatorPart1()).toList();
         return Streams.mapWithIndex(hands.stream(), (hand, index) -> hand.bid() * (index + 1))
                 .mapToLong(Long::longValue)
                 .sum();
