@@ -1,11 +1,8 @@
 package aoc2023.day7;
 
 import aoc2023.utils.IO;
-import com.google.common.collect.Comparators;
 import com.google.common.collect.Streams;
 
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
 import static java.util.function.UnaryOperator.identity;
