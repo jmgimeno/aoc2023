@@ -100,25 +100,6 @@ public class Day7 {
     Your puzzle answer was 248422077.
     */
 
-    record IterableString(String string) implements Iterable<Character> {
-        @Override
-        public Iterator<Character> iterator() {
-            return new Iterator<>() {
-                int index = 0;
-
-                @Override
-                public boolean hasNext() {
-                    return index < string.length();
-                }
-
-                @Override
-                public Character next() {
-                    return string.charAt(index++);
-                }
-            };
-        }
-    }
-
     record Hand(String cards, int bid, HandType type) implements Comparable<Hand> {
         static Hand parse(String line) {
             var parts = line.split(" ");
@@ -148,13 +129,27 @@ public class Day7 {
             }
         }
 
+        static int compare(String cards1, String cards2) {
+            var cardOrder = "23456789TJQKA";
+            int i = 0;
+            while (i < cards1.length() && i < cards2.length()) {
+                var c1 = cards1.charAt(i);
+                var c2 = cards2.charAt(i);
+                var cmp = Integer.compare(cardOrder.indexOf(c1), cardOrder.indexOf(c2));
+                if (cmp != 0) {
+                    return cmp;
+                }
+                i++;
+            }
+            return 0;
+        }
+
         @Override
         public int compareTo(Hand o) {
-            var cardOrder = "23456789TJQKA";
-            Comparator<Hand> byPlay = Comparator.comparing(Hand::type);
-            Comparator<Iterable<Character>> byCard = Comparators.lexicographical(Comparator.comparingInt(cardOrder::indexOf));
-            Comparator<Hand> byHand = Comparator.comparing(hand -> new IterableString(hand.cards()), byCard);
-            return byPlay.thenComparing(byHand).compare(this, o);
+            var byHandType = type.compareTo(o.type);
+            if (byHandType != 0)
+                return byHandType;
+            return compare(cards, o.cards);
         }
     }
 
