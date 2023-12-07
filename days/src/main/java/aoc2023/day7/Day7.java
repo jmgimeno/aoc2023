@@ -128,6 +128,7 @@ public class Day7 {
                 return getJokerizedHandType(counts.values(), jokerCount.intValue());
             }
         }
+
         private static Map<Character, Long> countCards(String cards) {
             return cards.chars()
                     .boxed()
