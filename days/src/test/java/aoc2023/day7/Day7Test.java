@@ -3,7 +3,6 @@ package aoc2023.day7;
 import aoc2023.day7.Day7.Hand;
 import aoc2023.day7.Day7.HandType;
 import aoc2023.utils.IO;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -47,10 +46,9 @@ class Day7Test {
 
     @Test
     @DisplayName("part2 - input data")
-    @Disabled("part2 - not implemented")
     void test4() {
         var data = IO.getResourceAsList("day7.txt");
-        assertEquals(-1, day7.part2(data));
+        assertEquals(249817836, day7.part2(data));
     }
 
     @Test
