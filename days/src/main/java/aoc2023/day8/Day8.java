@@ -2,8 +2,6 @@ package aoc2023.day8;
 
 import aoc2023.utils.IO;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -106,14 +104,10 @@ public class Day8 {
         class SimpleWalker {
             private String current;
             private final Predicate<String> isFinished;
-            private final Map<String, String> visited;  // start -> end
-            private long cycleLength;
 
             SimpleWalker(String current, Predicate<String> isFinished) {
                 this.current = current;
                 this.isFinished = isFinished;
-                this.visited = new HashMap<>();
-                this.cycleLength = 0L;
             }
 
             void next(String step) {
@@ -125,39 +119,17 @@ public class Day8 {
                 }
             }
 
-            void walkOncePart1(InputPath path) {
+            void walkPath(InputPath path) {
                 for (var step : path.steps().split("")) {
                     next(step);
                 }
             }
 
-            void walkOncePart2(InputPath path) {
-                var start = current;
-                if (visited.containsKey(start)) {
-                    System.out.printf("%s -> %s%n", start, visited.get(start));
-                    cycleLength = path(visited, start).size();
-                }
-                for (var step : path.steps().split("")) {
-                    next(step);
-                }
-                visited.put(start, current);
-            }
-
-            private static List<String> path(Map<String, String> visited, String start) {
-                var path = new ArrayList<String>();
-                var current = start;
-                do {
-                    path.add(current);
-                    current = visited.get(current);
-                } while (!current.equals(start));
-                return path;
-            }
-
-            long part1(InputPath path) {
+            long numPathsToFinish(InputPath path) {
                 var count = 0L;
                 while (!isFinished()) {
-                    walkOncePart1(path);
-                    count += path.steps().length();
+                    walkPath(path);
+                    count += 1;
                 }
                 return count;
             }
@@ -166,12 +138,8 @@ public class Day8 {
                 return isFinished.test(current);
             }
 
-            boolean hasCycle() {
-                return cycleLength > 0;
-            }
-
-            long cycleLength() {
-                return cycleLength;
+            long part1(InputPath path) {
+                return numPathsToFinish(path) * path.steps().length();
             }
         }
 
@@ -185,17 +153,14 @@ public class Day8 {
                         .collect(Collectors.toList());
             }
 
-            long part2(InputPath path) {
-                List<SimpleWalker> yetWalking = new ArrayList<>(walkers);
-                while (!yetWalking.isEmpty()) {
-                    yetWalking.forEach(w -> w.walkOncePart2(path));
-                    yetWalking = yetWalking.stream()
-                            .filter(w -> !w.hasCycle())
-                            .toList();
-                }
+            long numPathsToFinish(InputPath path) {
                 return walkers.stream()
-                        .mapToLong(SimpleWalker::cycleLength)
-                        .reduce(1L, (a, b) -> a * b) * path.steps().length();
+                        .mapToLong(w -> w.numPathsToFinish(path))
+                        .reduce(1L, (a, b) -> a * b);
+            }
+
+            long part2(InputPath path) {
+                return numPathsToFinish(path) * path.steps().length();
             }
         }
     }
@@ -307,6 +272,9 @@ public class Day8 {
     - the second one will be on a finishing node after every 3 paths
         => both will be on an end node after every mcm(1, 3) = 3 paths
         => so the num of steps will be 3 * 2 = 6
+
+    => For the second part we do not need to detect the cycle length because it is only
+        the length to reach the unique finishing node from the start !!!
 
      */
 
