@@ -15,7 +15,7 @@
 - Day 5: If You Give A Seed A Fertilizer
 - Day 6: Wait For It
 - Day 7: Camel Cards
-- Day 8:  
+- Day 8: Haunted Wasteland 
 - Day 9:  
 - Day 10: 
 - Day 11: 
