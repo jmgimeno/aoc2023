@@ -60,23 +60,24 @@ public class Day8 {
     Your puzzle answer was 20659.
     */
 
-    record Path(String steps) {
-        static Path parse(String line) {
-            return new Path(line);
-        }
-    }
-
-    record Node(String root, String left, String right) {
-        static Node parse(String line) {
-            var parts = line.split(" = ");
-            var root = parts[0];
-            var children = parts[1].substring(1, parts[1].length() - 1).split(", ");
-            return new Node(root, children[0], children[1]);
+    record InputPath(String steps) {
+        static InputPath parse(String line) {
+            return new InputPath(line);
         }
     }
 
     static final class Tree {
+
         private final Map<String, Node> nodes;
+
+        record Node(String root, String left, String right) {
+            static Node parse(String line) {
+                var parts = line.split(" = ");
+                var root = parts[0];
+                var children = parts[1].substring(1, parts[1].length() - 1).split(", ");
+                return new Node(root, children[0], children[1]);
+            }
+        }
 
         Tree(Map<String, Node> nodes) {
             this.nodes = nodes;
@@ -103,41 +104,40 @@ public class Day8 {
         class SimpleWalker {
             private String current;
             private final Predicate<String> isFinished;
-            private final Map<String, String> visited;
+            private final Map<String, String> visited;  // start -> end
+            private long cycleLength;
 
             SimpleWalker(String current, Predicate<String> isFinished) {
                 this.current = current;
                 this.isFinished = isFinished;
                 this.visited = new HashMap<>();
+                this.cycleLength = 0L;
             }
 
-            String next(String step) {
+            void next(String step) {
                 var node = nodes.get(current);
                 if (step.equals("L")) {
                     current = node.left();
                 } else {
                     current = node.right();
                 }
-                return current;
             }
 
-            String walkOncePart1(Path path) {
+            void walkOncePart1(InputPath path) {
                 for (var step : path.steps().split("")) {
                     next(step);
                 }
-                return current;
             }
 
-            long walkOncePart2(Path path) {
+            void walkOncePart2(InputPath path) {
                 var start = current;
                 if (visited.containsKey(start)) {
-                    return path(visited, start).size();
+                    cycleLength = path(visited, start).size();
                 }
                 for (var step : path.steps().split("")) {
                     next(step);
                 }
                 visited.put(start, current);
-                return 0;
             }
 
             private static List<String> path(Map<String, String> visited, String start) {
@@ -150,7 +150,7 @@ public class Day8 {
                 return path;
             }
 
-            long part1(Path path) {
+            long part1(InputPath path) {
                 var count = 0L;
                 while (!isFinished()) {
                     walkOncePart1(path);
@@ -163,48 +163,42 @@ public class Day8 {
                 return isFinished.test(current);
             }
 
+            boolean hasCycle() {
+                return cycleLength > 0;
+            }
+
+            long cycleLength() {
+                return cycleLength;
+            }
         }
 
         class MultipleWalker {
-            // A multiple walker has many simple walkers, each starting in a different node
-            // and will finish when all are finished
+
             private final List<SimpleWalker> walkers;
 
             MultipleWalker(List<String> starts) {
                 walkers = starts.stream()
                         .map(s -> new SimpleWalker(s, node -> node.endsWith("Z")))
                         .collect(Collectors.toList());
-                System.out.println("num walkers = " + walkers.size());
             }
 
-            boolean isFinished() {
-                return walkers.stream().allMatch(SimpleWalker::isFinished);
-            }
-
-            void walkOnce(Path path) {
-                for (var walker : walkers) {
-                    walker.walkOncePart1(path);
-                }
-            }
-
-            long part2(Path path) {
-                var numFinished = 0L;
-                while (numFinished < walkers.size()) {
-                    numFinished = walkers.stream()
-                            .mapToLong(w -> w.walkOncePart2(path))
-                            .filter(c -> c > 0)
-                            .count();
+            long part2(InputPath path) {
+                List<SimpleWalker> yetWalking = new ArrayList<>(walkers);
+                while (!yetWalking.isEmpty()) {
+                    yetWalking.forEach(w -> w.walkOncePart2(path));
+                    yetWalking = yetWalking.stream()
+                            .filter(w -> !w.hasCycle())
+                            .toList();
                 }
                 return walkers.stream()
-                        .mapToLong(w -> w.walkOncePart2(path))
+                        .mapToLong(SimpleWalker::cycleLength)
                         .reduce(1L, (a, b) -> a * b) * path.steps().length();
             }
         }
-
     }
 
     long part1(List<String> data) {
-        var path = Path.parse(data.get(0));
+        var path = InputPath.parse(data.getFirst());
         var tree = Tree.parse(data.subList(2, data.size()));
         return tree.simpleWalker().part1(path);
     }
@@ -259,7 +253,7 @@ public class Day8 {
      */
 
     long part2(List<String> data) {
-        var path = Path.parse(data.get(0));
+        var path = InputPath.parse(data.getFirst());
         var tree = Tree.parse(data.subList(2, data.size()));
         return tree.multipleWalker().part2(path);
     }
