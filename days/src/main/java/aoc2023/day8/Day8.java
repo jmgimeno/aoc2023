@@ -32,15 +32,16 @@ public class Day8 {
 
     This format defines each node of the network individually. For example:
 
-    RL
+        RL
 
-    AAA = (BBB, CCC)
-    BBB = (DDD, EEE)
-    CCC = (ZZZ, GGG)
-    DDD = (DDD, DDD)
-    EEE = (EEE, EEE)
-    GGG = (GGG, GGG)
-    ZZZ = (ZZZ, ZZZ)
+        AAA = (BBB, CCC)
+        BBB = (DDD, EEE)
+        CCC = (ZZZ, GGG)
+        DDD = (DDD, DDD)
+        EEE = (EEE, EEE)
+        GGG = (GGG, GGG)
+        ZZZ = (ZZZ, ZZZ)
+
     Starting with AAA, you need to look up the next element based on the next left/right instruction
     in your input. In this example, start with AAA and go right (R) by choosing the right element of
     AAA, CCC. Then, L means to choose the left element of CCC, ZZZ. By following the left/right
@@ -50,11 +51,12 @@ public class Day8 {
     the whole sequence of instructions as necessary: RL really means RLRLRLRLRLRLRLRL... and so on.
     For example, here is a situation that takes 6 steps to reach ZZZ:
 
-    LLR
+        LLR
 
-    AAA = (BBB, BBB)
-    BBB = (AAA, ZZZ)
-    ZZZ = (ZZZ, ZZZ)
+        AAA = (BBB, BBB)
+        BBB = (AAA, ZZZ)
+        ZZZ = (ZZZ, ZZZ)
+
     Starting at AAA, follow the left/right instructions. How many steps are required to reach ZZZ?
 
     Your puzzle answer was 20659.
@@ -132,6 +134,7 @@ public class Day8 {
             void walkOncePart2(InputPath path) {
                 var start = current;
                 if (visited.containsKey(start)) {
+                    System.out.printf("%s -> %s%n", start, visited.get(start));
                     cycleLength = path(visited, start).size();
                 }
                 for (var step : path.steps().split("")) {
@@ -252,6 +255,61 @@ public class Day8 {
     Your puzzle answer was 15690466351717.
      */
 
+    /*
+
+    Thanks reddit.com for the posts analyzing this problem:
+
+    https://www.reddit.com/r/adventofcode/comments/18dfpub/2023_day_8_part_2_why_is_spoiler_correct/
+
+    The puzzle data is constructed such that:
+
+    - A -(h)-> X -(m)-> Z
+    -          ^        |
+    -          |--(t)---|
+    -
+    - A needs h steps to reach the cycle
+    - there is only one end node Z in the cycle
+    - the time from the head of the cycle X to Z is m
+    - the time from Z to the head of the cycle X is t
+    - the time h is the same as t
+
+    => the cycleLength = m + t = m + h
+    => at each cycleLength we are in the end node Z
+
+    => all cycles will be synchronized after the mcm of all cycle lengths
+    => as the lengths are prime => multiply them all together
+
+    - BTW: I noticed that the cycle is 1 step longer than the path to detect it, but
+    - I didn't fully grasp why it mattered
+
+    For instance, in the input data:
+
+            LR
+
+            11A = (11B, XXX)
+            11B = (XXX, 11Z)
+            11Z = (11B, XXX)
+            22A = (22B, XXX)
+            22B = (22C, 22C)
+            22C = (22Z, 22Z)
+            22Z = (22B, 22B)
+            XXX = (XXX, XXX)
+
+    - 11A -(LR)-> 11Z -(LR)-> 11Z
+        => the cycle has length 1
+        => the length from 11A to the unique finishing node 11Z is 1
+
+    - 22A -(LR)-> 22C -(LR)-> 22B -(LR)-> 22Z -(LR)-> 22C
+        => the cycle has length 3
+        => the path from 22A to the unique finishing node 22Z is 3
+
+    - the first one will be on a finishing node after every path
+    - the second one will be on a finishing node after every 3 paths
+        => both will be on an end node after every mcm(1, 3) = 3 paths
+        => so the num of steps will be 3 * 2 = 6
+
+     */
+
     long part2(List<String> data) {
         var path = InputPath.parse(data.getFirst());
         var tree = Tree.parse(data.subList(2, data.size()));
@@ -262,8 +320,8 @@ public class Day8 {
         var day8 = new Day8();
         var data = IO.getResourceAsList("day8.txt");
         var part1 = day8.part1(data);
-        System.out.println("part1 = " + part1);
+        System.out.printf("part1 = %s%n", part1);
         var part2 = day8.part2(data);
-        System.out.println("part2 = " + part2);
+        System.out.printf("part2 = %s%n", part2);
     }
 }
