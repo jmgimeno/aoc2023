@@ -60,25 +60,22 @@ class Day8Test {
 
     @Test
     @DisplayName("part1 - input data")
-    @Disabled("part1 - not implemented")
     void test2() {
         var data = IO.getResourceAsList("day8.txt");
-        assertEquals(-1, day8.part1(data));
+        assertEquals(20659, day8.part1(data));
     }
 
     @Test
     @DisplayName("part2 - example2")
-    @Disabled("part2 - not implemented")
     void test3a() {
         var data = IO.splitLinesAsList(example2);
-        assertEquals(-1, day8.part2(data));
+        assertEquals(6L, day8.part2(data));
     }
 
     @Test
     @DisplayName("part2 - input data")
-    @Disabled("part2 - not implemented")
     void test4() {
         var data = IO.getResourceAsList("day8.txt");
-        assertEquals(-1, day8.part2(data));
+        assertEquals(15690466351717L, day8.part2(data));
     }
 }

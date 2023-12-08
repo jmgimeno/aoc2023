@@ -2,8 +2,11 @@ package aoc2023.day8;
 
 import aoc2023.utils.IO;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.function.UnaryOperator.identity;
@@ -65,7 +68,6 @@ public class Day8 {
 
     record Node(String root, String left, String right) {
         static Node parse(String line) {
-            // line = "AAA = (BBB, CCC)"
             var parts = line.split(" = ");
             var root = parts[0];
             var children = parts[1].substring(1, parts[1].length() - 1).split(", ");
@@ -87,15 +89,26 @@ public class Day8 {
             return new Tree(nodes);
         }
 
-        Walker walker() {
-            return new Walker("AAA");
+        SimpleWalker simpleWalker() {
+            return new SimpleWalker("AAA", s -> s.endsWith("ZZZ"));
         }
 
-        class Walker {
-            private String current;
+        MultipleWalker multipleWalker() {
+            var starts = nodes.keySet().stream()
+                    .filter(s -> s.endsWith("A"))
+                    .collect(Collectors.toList());
+            return new MultipleWalker(starts);
+        }
 
-            Walker(String current) {
+        class SimpleWalker {
+            private String current;
+            private final Predicate<String> isFinished;
+            private final Map<String, String> visited;
+
+            SimpleWalker(String current, Predicate<String> isFinished) {
                 this.current = current;
+                this.isFinished = isFinished;
+                this.visited = new HashMap<>();
             }
 
             String next(String step) {
@@ -108,20 +121,83 @@ public class Day8 {
                 return current;
             }
 
-            String walkOnce(Path path) {
+            String walkOncePart1(Path path) {
                 for (var step : path.steps().split("")) {
                     next(step);
                 }
                 return current;
             }
 
+            long walkOncePart2(Path path) {
+                var start = current;
+                if (visited.containsKey(start)) {
+                    return path(visited, start).size();
+                }
+                for (var step : path.steps().split("")) {
+                    next(step);
+                }
+                visited.put(start, current);
+                return 0;
+            }
+
+            private static List<String> path(Map<String, String> visited, String start) {
+                var path = new ArrayList<String>();
+                var current = start;
+                do {
+                    path.add(current);
+                    current = visited.get(current);
+                } while (!current.equals(start));
+                return path;
+            }
+
             long part1(Path path) {
                 var count = 0L;
-                while (!current.equals("ZZZ")) {
-                    walkOnce(path);
+                while (!isFinished()) {
+                    walkOncePart1(path);
                     count += path.steps().length();
                 }
                 return count;
+            }
+
+            boolean isFinished() {
+                return isFinished.test(current);
+            }
+
+        }
+
+        class MultipleWalker {
+            // A multiple walker has many simple walkers, each starting in a different node
+            // and will finish when all are finished
+            private final List<SimpleWalker> walkers;
+
+            MultipleWalker(List<String> starts) {
+                walkers = starts.stream()
+                        .map(s -> new SimpleWalker(s, node -> node.endsWith("Z")))
+                        .collect(Collectors.toList());
+                System.out.println("num walkers = " + walkers.size());
+            }
+
+            boolean isFinished() {
+                return walkers.stream().allMatch(SimpleWalker::isFinished);
+            }
+
+            void walkOnce(Path path) {
+                for (var walker : walkers) {
+                    walker.walkOncePart1(path);
+                }
+            }
+
+            long part2(Path path) {
+                var numFinished = 0L;
+                while (numFinished < walkers.size()) {
+                    numFinished = walkers.stream()
+                            .mapToLong(w -> w.walkOncePart2(path))
+                            .filter(c -> c > 0)
+                            .count();
+                }
+                return walkers.stream()
+                        .mapToLong(w -> w.walkOncePart2(path))
+                        .reduce(1L, (a, b) -> a * b) * path.steps().length();
             }
         }
 
@@ -130,7 +206,7 @@ public class Day8 {
     long part1(List<String> data) {
         var path = Path.parse(data.get(0));
         var tree = Tree.parse(data.subList(2, data.size()));
-        return tree.walker().part1(path);
+        return tree.simpleWalker().part1(path);
     }
 
     /*
@@ -178,10 +254,14 @@ public class Day8 {
 
     Simultaneously start on every node that ends with A. How many steps does it take before you're
     only on nodes that end with Z?
+
+    Your puzzle answer was 15690466351717.
      */
 
-    int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+    long part2(List<String> data) {
+        var path = Path.parse(data.get(0));
+        var tree = Tree.parse(data.subList(2, data.size()));
+        return tree.multipleWalker().part2(path);
     }
 
     public static void main(String[] args) {
@@ -189,7 +269,7 @@ public class Day8 {
         var data = IO.getResourceAsList("day8.txt");
         var part1 = day8.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day8.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day8.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
