@@ -138,18 +138,11 @@ public class Day9 {
         }
 
         int previousValue() {
-            /*
-            I can use reduce with these parameters:
-                - forall u:
-                    - 0 + u = u
-                - forall u, t:
-                    - u + (t - 0) = u + t
-             */
-            return extrems().reversed().stream().
-                    reduce(0,
-                            (value, line) -> line.first() - value,
-                            Integer::sum
-                    );
+            int result = 0;
+            for (var line : extrems().reversed()) {
+                result = line.first() - result;
+            }
+            return result;
         }
     }
 
