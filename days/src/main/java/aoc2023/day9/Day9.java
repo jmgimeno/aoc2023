@@ -138,11 +138,22 @@ public class Day9 {
         }
 
         int previousValue() {
-            int result = 0;
-            for (var line : extrems().reversed()) {
-                result = line.first() - result;
-            }
-            return result;
+            /*
+            I can use reduce with these parameters:
+                - identity = 0
+                - accumulator = (a, b) -> b - a
+                - combiner = (a, b) -> b - a
+            Because:
+                - forall u:
+                    - combiner.apply(identity, u) = u
+                    - u - 0 = u
+                - forall u, t:
+                    - combiner.apply(u, accumulator.apply(identity, t)) == accumulator.apply(u, t)
+                    - (t - 0) - u  = t - u
+             */
+
+            return extrems().reversed().stream().
+                    reduce(0, (value, line) -> line.first() - value, (a, b) -> b - a);
         }
     }
 
