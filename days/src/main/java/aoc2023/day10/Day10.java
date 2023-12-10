@@ -6,6 +6,8 @@ import aoc2023.utils.IO;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static aoc2023.day10.Day10.PipeTyper.*;
+
 public class Day10 {
 
     /*
@@ -211,7 +213,7 @@ public class Day10 {
         private Position findStart() {
             for (int y = 0; y < height + 2; y++) {
                 for (int x = 0; x < width + 2; x++) {
-                    if (PipeTyper.isStart(points[y][x])) {
+                    if (isStart(points[y][x])) {
                         return new Position(x, y);
                     }
                 }
@@ -219,7 +221,146 @@ public class Day10 {
             throw new IllegalStateException("No start found");
         }
 
-        private int bfs(Position start) {
+        private static boolean connectsHorizontally(char l, char r) {
+            if (isStart(l)) {
+                return isEW(r) || isSW(r) || isNW(r);
+            } else if (isEW(l)) {
+                return isEW(r) || isSW(r) || isNW(r) || isStart(r);
+            } else if (isSE(l)) {
+                return isEW(r) || isSW(r) || isNW(r) || isStart(r);
+            } else if (isNE(l)) {
+                return isEW(r) || isSW(r) || isNW(r) || isStart(r);
+            }
+            return false;
+        }
+
+        public int[] countEastCrossings(int y, Set<Position> loop) {
+            var crossings = new int[width + 2];
+            var inPipe = false;
+            for (int x = width; x >= 1; x--) {
+                var current = at(new Position(x, y));
+                if (isSW(current) || isNW(current)) {
+                    assert !inPipe;
+                    inPipe = true;
+                    crossings[x] = crossings[x + 1] + 1;
+                } else if (isSE(current) || isNE(current)) {
+                    assert inPipe;
+                    inPipe = false;
+                    crossings[x] = crossings[x + 1];
+                } else if (isEW(current)) {
+                    assert inPipe;
+                    crossings[x] = crossings[x + 1];
+                } else if (isStart(current)) {
+                    if (!inPipe) {
+                        crossings[x] = crossings[x + 1];
+                    } else {
+                        crossings[x] = crossings[x + 1] + 1;
+                    }
+                    var next = new Position(x - 1, y);
+                    inPipe = connectsHorizontally(at(next), current);
+                } else if (isNS(current)) {
+                    crossings[x] = crossings[x + 1] + 1;
+                } else {
+                    crossings[x] = crossings[x + 1];
+                }
+            }
+            System.out.println("y = " + y + " crossings = " + Arrays.toString(crossings));
+            return crossings;
+        }
+
+        public int countAsParenthesesNorth(Position position) {
+            var counter = 0;
+            for (int yy = position.y() - 1; yy >= 0; yy--) {
+                var currentPos = new Position(position.x(), yy);
+                var current = at(currentPos);
+                if (isEW(current)) {
+                    counter++;
+                } else if (isNE(current) || isNW(current)) {
+                    counter++;
+                } else if (isSE(current) || isSW(current)) {
+                    counter--;
+                }
+            }
+            return counter;
+        }
+
+        public int countAsParenthesesEast(Position position) {
+            var counter = 0;
+            for (int xx = position.x() + 1; xx < width + 1; xx++) {
+                var currentPos = new Position(xx, position.y());
+                var current = at(currentPos);
+                if (isNS(current)) {
+                    counter++;
+                } else if (isNE(current) || isSE(current)) {
+                    counter++;
+                } else if (isNW(current) || isSW(current)) {
+                    counter--;
+                }
+            }
+            return counter;
+        }
+
+        public int countAsParenthesesSouth(Position position) {
+            var counter = 0;
+            for (int yy = position.y() + 1; yy < height + 1; yy++) {
+                var currentPos = new Position(position.x(), yy);
+                var current = at(currentPos);
+                if (isEW(current)) {
+                    counter++;
+                } else if (isSE(current) || isSW(current)) {
+                    counter++;
+                } else if (isNE(current) || isNW(current)) {
+                    counter--;
+                }
+            }
+            return counter;
+        }
+
+        public int countAsParenthesesWest(Position position) {
+            var counter = 0;
+            for (int xx = position.x() - 1; xx >= 0; xx--) {
+                var currentPos = new Position(xx, position.y());
+                var current = at(currentPos);
+                if (isNS(current)) {
+                    counter++;
+                } else if (isNW(current) || isSW(current)) {
+                    counter++;
+                } else if (isNE(current) || isSE(current)) {
+                    counter--;
+                }
+            }
+            return counter;
+        }
+
+        public int inside(Set<Position> loop) {
+            var inside = 0;
+            var pp = new ArrayList<Position>();
+            for (int y = 1; y < height + 1; y++) {
+                var eastCrossings = countEastCrossings(y, loop);
+                for (int x = 1; x < width + 1; x++) {
+                    var position = new Position(x, y);
+                    if (!loop.contains(position)) {
+                        //int east = eastCrossings[x];
+                        int north = countAsParenthesesNorth(position);
+                        int east = countAsParenthesesEast(position);
+                        int south = countAsParenthesesSouth(position);
+                        int west = countAsParenthesesWest(position);
+                        if (north % 2 == 1 && east % 2 == 1 && south % 2 == 1 && west % 2 == 1) {
+                            System.out.println("position " + position + "crossings = " + east);
+                            pp.add(position);
+                            inside++;
+                        }
+                    }
+                }
+            }
+            System.out.println("inside positions = " + pp);
+            return inside;
+        }
+
+        record Loop(Set<Position> positions, int length) {
+        }
+
+        private Loop bfs(Position start) {
             Queue<Position> queue = new LinkedList<>();
             Map<Position, Integer> distance = new HashMap<>();
 
@@ -237,7 +378,7 @@ public class Day10 {
                     }
                 }
             }
-            return Collections.max(distance.values());
+            return new Loop(distance.keySet(), Collections.max(distance.values()));
         }
 
         private void addIfValid(Collection<Position> positions, Predicate<Position> isValid, Position current, Position next) {
@@ -245,32 +386,33 @@ public class Day10 {
                 positions.add(next);
             }
         }
+
         private List<Position> validNextPositions(Position position) {
             var current = at(position);
             var nextPositions = new ArrayList<Position>();
-            if (PipeTyper.isStart(current)) {
-                addIfValid(nextPositions, p -> PipeTyper.canGoNorth(at(p)), position, position.north());
-                addIfValid(nextPositions, p -> PipeTyper.canGoEast(at(p)), position, position.east());
-                addIfValid(nextPositions, p -> PipeTyper.canGoSouth(at(p)), position, position.south());
-                addIfValid(nextPositions, p -> PipeTyper.canGoWest(at(p)), position, position.west());
-            } else if (PipeTyper.isNE(current)) {
-                addIfValid(nextPositions, p -> PipeTyper.canGoNorth(at(p)), position, position.north());
-                addIfValid(nextPositions, p -> PipeTyper.canGoEast(at(p)), position, position.east());
-            } else if (PipeTyper.isNW(current)) {
-                addIfValid(nextPositions, p -> PipeTyper.canGoNorth(at(p)), position, position.north());
-                addIfValid(nextPositions, p -> PipeTyper.canGoWest(at(p)), position, position.west());
-            } else if (PipeTyper.isSE(current)) {
-                addIfValid(nextPositions, p -> PipeTyper.canGoEast(at(p)), position, position.east());
-                addIfValid(nextPositions, p -> PipeTyper.canGoSouth(at(p)), position, position.south());
-            } else if (PipeTyper.isSW(current)) {
-                addIfValid(nextPositions, p -> PipeTyper.canGoSouth(at(p)), position, position.south());
-                addIfValid(nextPositions, p -> PipeTyper.canGoWest(at(p)), position, position.west());
-            } else if (PipeTyper.isNS(current)) {
-                addIfValid(nextPositions, p -> PipeTyper.canGoNorth(at(p)), position, position.north());
-                addIfValid(nextPositions, p -> PipeTyper.canGoSouth(at(p)), position, position.south());
-            } else if (PipeTyper.isEW(current)) {
-                addIfValid(nextPositions, p -> PipeTyper.canGoEast(at(p)), position, position.east());
-                addIfValid(nextPositions, p -> PipeTyper.canGoWest(at(p)), position, position.west());
+            if (isStart(current)) {
+                addIfValid(nextPositions, p -> canGoNorth(at(p)), position, position.north());
+                addIfValid(nextPositions, p -> canGoEast(at(p)), position, position.east());
+                addIfValid(nextPositions, p -> canGoSouth(at(p)), position, position.south());
+                addIfValid(nextPositions, p -> canGoWest(at(p)), position, position.west());
+            } else if (isNE(current)) {
+                addIfValid(nextPositions, p -> canGoNorth(at(p)), position, position.north());
+                addIfValid(nextPositions, p -> canGoEast(at(p)), position, position.east());
+            } else if (isNW(current)) {
+                addIfValid(nextPositions, p -> canGoNorth(at(p)), position, position.north());
+                addIfValid(nextPositions, p -> canGoWest(at(p)), position, position.west());
+            } else if (isSE(current)) {
+                addIfValid(nextPositions, p -> canGoEast(at(p)), position, position.east());
+                addIfValid(nextPositions, p -> canGoSouth(at(p)), position, position.south());
+            } else if (isSW(current)) {
+                addIfValid(nextPositions, p -> canGoSouth(at(p)), position, position.south());
+                addIfValid(nextPositions, p -> canGoWest(at(p)), position, position.west());
+            } else if (isNS(current)) {
+                addIfValid(nextPositions, p -> canGoNorth(at(p)), position, position.north());
+                addIfValid(nextPositions, p -> canGoSouth(at(p)), position, position.south());
+            } else if (isEW(current)) {
+                addIfValid(nextPositions, p -> canGoEast(at(p)), position, position.east());
+                addIfValid(nextPositions, p -> canGoWest(at(p)), position, position.west());
             }
             return nextPositions;
         }
@@ -278,15 +420,120 @@ public class Day10 {
 
     int part1(List<String> data) {
         var pipeGrid = new PipeGrid(data);
-        return pipeGrid.bfs(pipeGrid.start);
+        return pipeGrid.bfs(pipeGrid.start).length();
     }
 
     /*
+    --- Part Two ---
+    You quickly reach the farthest point of the loop, but the animal never emerges. Maybe its nest is
+    within the area enclosed by the loop?
+
+    To determine whether it's even worth taking the time to search for such a nest, you should
+    calculate how many tiles are contained within the loop. For example:
+
+    ...........
+    .S-------7.
+    .|F-----7|.
+    .||.....||.
+    .||.....||.
+    .|L-7.F-J|.
+    .|..|.|..|.
+    .L--J.L--J.
+    ...........
+    The above loop encloses merely four tiles - the two pairs of . in the southwest and southeast
+    (marked I below). The middle . tiles (marked O below) are not in the loop. Here is the same
+    loop again with those regions marked:
+
+    ...........
+    .S-------7.
+    .|F-----7|.
+    .||OOOOO||.
+    .||OOOOO||.
+    .|L-7OF-J|.
+    .|II|O|II|.
+    .L--JOL--J.
+    .....O.....
+    In fact, there doesn't even need to be a full tile path to the outside for tiles to count as
+    outside the loop - squeezing between pipes is also allowed! Here, I is still within the loop
+    and O is still outside the loop:
+
+    ..........
+    .S------7.
+    .|F----7|.
+    .||OOOO||.
+    .||OOOO||.
+    .|L-7F-J|.
+    .|II||II|.
+    .L--JL--J.
+    ..........
+    In both of the above examples, 4 tiles are enclosed by the loop.
+
+    Here's a larger example:
+
+    .F----7F7F7F7F-7....
+    .|F--7||||||||FJ....
+    .||.FJ||||||||L7....
+    FJL7L7LJLJ||LJ.L-7..
+    L--J.L7...LJS7F-7L7.
+    ....F-J..F7FJ|L7L7L7
+    ....L7.F7||L7|.L7L7|
+    .....|FJLJ|FJ|F7|.LJ
+    ....FJL-7.||.||||...
+    ....L---J.LJ.LJLJ...
+    The above sketch has many random bits of ground, some of which are in the loop (I) and some of
+    which are outside it (O):
+
+    OF----7F7F7F7F-7OOOO
+    O|F--7||||||||FJOOOO
+    O||OFJ||||||||L7OOOO
+    FJL7L7LJLJ||LJIL-7OO
+    L--JOL7IIILJS7F-7L7O
+    OOOOF-JIIF7FJ|L7L7L7
+    OOOOL7IF7||L7|IL7L7|
+    OOOOO|FJLJ|FJ|F7|OLJ
+    OOOOFJL-7O||O||||OOO
+    OOOOL---JOLJOLJLJOOO
+
+    In this larger example, 8 tiles are enclosed by the loop.
+
+    Any tile that isn't part of the main loop can count as being enclosed by the loop. Here's another
+    example with many bits of junk pipe lying around that aren't connected to the main loop at all:
+
+    FF7FSF7F7F7F7F7F---7
+    L|LJ||||||||||||F--J
+    FL-7LJLJ||||||LJL-77
+    F--JF--7||LJLJ7F7FJ-
+    L---JF-JLJ.||-FJLJJ7
+    |F|F-JF---7F7-L7L|7|
+    |FFJF7L7F-JF7|JL---7
+    7-L-JL7||F7|L7F-7F7|
+    L.L7LFJ|||||FJL7||LJ
+    L7JLJL-JLJLJL--JLJ.L
+
+    Here are just the tiles that are enclosed by the loop marked with I:
+
+    FF7FSF7F7F7F7F7F---7
+    L|LJ||||||||||||F--J
+    FL-7LJLJ||||||LJL-77
+    F--JF--7||LJLJIF7FJ-
+    L---JF-JLJIIIIFJLJJ7
+    |F|F-JF---7IIIL7L|7|
+    |FFJF7L7F-JF7IIL---7
+    7-L-JL7||F7|L7F-7F7|
+    L.L7LFJ|||||FJL7||LJ
+    L7JLJL-JLJLJL--JLJ.L
+    In this last example, 10 tiles are enclosed by the loop.
+
+    Figure out whether you have time to search for the nest by calculating the area within the loop.
+    How many tiles are enclosed by the loop?
+
 
      */
 
     int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+        var pipeGrid = new PipeGrid(data);
+        var loop = pipeGrid.bfs(pipeGrid.start);
+        return pipeGrid.inside(loop.positions());
     }
 
     public static void main(String[] args) {
@@ -294,7 +541,7 @@ public class Day10 {
         var data = IO.getResourceAsList("day10.txt");
         var part1 = day10.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day10.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day10.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
