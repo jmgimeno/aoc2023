@@ -221,104 +221,63 @@ public class Day10 {
             throw new IllegalStateException("No start found");
         }
 
-        public int countNorth(Position position, Set<Position> loop) {
-            var counter = 0;
-            for (int yy = position.y() - 1; yy >= 0; yy--) {
-                var currentPos = new Position(position.x(), yy);
-                if (!loop.contains(currentPos)) continue;
-                var current = at(currentPos);
-                if (isEW(current) || isNE(current) || isNW(current)) {
-                    counter++;
-                } else if (isSE(current) || isSW(current)) {
-                    counter--;
-                } else if (isStart(current)) {
-                    var prev = new Position(position.x(), yy + 1);
-                    var next = new Position(position.x(), yy - 1);
-                    if (!loop.contains(prev)) {
-                        // start begins
-                        counter++;
-                    } else if (loop.contains(next)) {
-                        // start ends
-                        counter--;
-                    }
-                }
-            }
-            return counter;
+        private boolean inside(Position position, Set<Position> loop) {
+            return insideToTheEast(position, loop).orElseGet(() -> insideToTheWest(position, loop));
         }
 
-        public int countEast(Position position, Set<Position> loop) {
+        public Optional<Boolean> insideToTheEast(Position position, Set<Position> loop) {
             var counter = 0;
+            var fromNorth = false;
+            var fromSouth = false;
             for (int xx = position.x() + 1; xx < width + 1; xx++) {
                 var currentPos = new Position(xx, position.y());
                 if (!loop.contains(currentPos)) continue;
                 var current = at(currentPos);
-                if (isNS(current) || isNE(current) || isSE(current)) {
+                if (isStart(current)) {
+                    return Optional.empty();
+                } else if (isNS(current)) {
                     counter++;
-                } else if (isNW(current) || isSW(current)) {
-                    counter--;
-                } else if (isStart(current)) {
-                    var prev = new Position(xx - 1, position.y());
-                    var next = new Position(xx + 1, position.y());
-                    if (!loop.contains(prev)) {
-                        // start begins
-                        counter++;
-                    } else if (loop.contains(next)) {
-                        // start ends
-                        counter--;
-                    }
+                } else if (isNE(current)) {
+                    fromNorth = true;
+                } else if (isSE(current)) {
+                    fromSouth = true;
+                } else if (isNW(current)) {
+                    if (fromSouth) counter++;
+                    fromNorth = fromSouth = false;
+                } else if (isSW(current)) {
+                    if (fromNorth) counter++;
+                    fromNorth = fromSouth = false;
                 }
             }
-            return counter;
+            return Optional.of(counter % 2 == 1);
         }
 
-        public int countSouth(Position position, Set<Position> loop) {
-            var counter = 0;
-            for (int yy = position.y() + 1; yy < height + 1; yy++) {
-                var currentPos = new Position(position.x(), yy);
-                if (!loop.contains(currentPos)) continue;
-                var current = at(currentPos);
-                if (isEW(current) || isSE(current) || isSW(current)) {
-                    counter++;
-                } else if (isNE(current) || isNW(current)) {
-                    counter--;
-                } else if (isStart(current)) {
-                    var prev = new Position(position.x(), yy - 1);
-                    var next = new Position(position.x(), yy + 1);
-                    if (!loop.contains(prev)) {
-                        // start begins
-                        counter++;
-                    } else if (loop.contains(next)) {
-                        // start ends
-                        counter--;
-                    }
-                }
-            }
-            return counter;
-        }
 
-        public int countWest(Position position, Set<Position> loop) {
+        public boolean insideToTheWest(Position position, Set<Position> loop) {
             var counter = 0;
+            var fromNorth = false;
+            var fromSouth = false;
             for (int xx = position.x() - 1; xx >= 0; xx--) {
                 var currentPos = new Position(xx, position.y());
                 if (!loop.contains(currentPos)) continue;
                 var current = at(currentPos);
-                if (isNS(current) || isNW(current) || isSW(current)) {
+                if (isStart(current)) {
+                    throw new IllegalStateException("start should not be on this path");
+                } else if (isNS(current)) {
                     counter++;
-                } else if (isNE(current) || isSE(current)) {
-                    counter--;
-                } else if (isStart(current)) {
-                    var prev = new Position(xx + 1, position.y());
-                    var next = new Position(xx - 1, position.y());
-                    if (!loop.contains(prev) ) {
-                        // start begins
-                        counter++;
-                    } else if (loop.contains(next)) {
-                        // start ends
-                        counter--;
-                    }
+                } else if (isNW(current)) {
+                    fromNorth = true;
+                } else if (isSW(current)) {
+                    fromSouth = true;
+                } else if (isSE(current)) {
+                    if (fromNorth) counter++;
+                    fromNorth = fromSouth = false;
+                } else if (isNE(current)) {
+                    if (fromSouth) counter++;
+                    fromNorth = fromSouth = false;
                 }
             }
-            return counter;
+            return counter % 2 == 1;
         }
 
         public int inside(Set<Position> loop) {
@@ -326,14 +285,8 @@ public class Day10 {
             for (int y = 1; y < height + 1; y++) {
                 for (int x = 1; x < width + 1; x++) {
                     var position = new Position(x, y);
-                    if (!loop.contains(position)) {
-                        int north = countNorth(position, loop);
-                        int east = countEast(position, loop);
-                        int south = countSouth(position, loop);
-                        int west = countWest(position, loop);
-                        if (north % 2 == 1 && east % 2 == 1 && south % 2 == 1 && west % 2 == 1) {
-                            inside++;
-                        }
+                    if (!loop.contains(position) && inside(position, loop)) {
+                        inside++;
                     }
                 }
             }
@@ -364,7 +317,8 @@ public class Day10 {
             return new Loop(distance.keySet(), Collections.max(distance.values()));
         }
 
-        private void addIfValid(Collection<Position> positions, Predicate<Position> isValid, Position current, Position next) {
+        private void addIfValid(Collection<Position> positions, Predicate<Position> isValid,
+                                Position current, Position next) {
             if (isValid.test(next)) {
                 positions.add(next);
             }
@@ -408,7 +362,8 @@ public class Day10 {
 
     /*
     --- Part Two ---
-    You quickly reach the farthest point of the loop, but the animal never emerges. Maybe its nest is
+    You quickly reach the farthest point of the loop, but the animal never emerges. Maybe its
+    nest is
     within the area enclosed by the loop?
 
     To determine whether it's even worth taking the time to search for such a nest, you should
@@ -479,7 +434,8 @@ public class Day10 {
 
     In this larger example, 8 tiles are enclosed by the loop.
 
-    Any tile that isn't part of the main loop can count as being enclosed by the loop. Here's another
+    Any tile that isn't part of the main loop can count as being enclosed by the loop. Here's
+    another
     example with many bits of junk pipe lying around that aren't connected to the main loop at all:
 
     FF7FSF7F7F7F7F7F---7
