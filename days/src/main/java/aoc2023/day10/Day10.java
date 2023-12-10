@@ -6,8 +6,6 @@ import aoc2023.utils.IO;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static aoc2023.day10.Day10.PipeTyper.*;
-
 public class Day10 {
 
     /*
@@ -146,57 +144,6 @@ public class Day10 {
         }
     }
 
-    static class PipeTyper {
-
-        static boolean isNS(char c) {
-            return c == '|';
-        }
-
-        static boolean isEW(char c) {
-            return c == '-';
-        }
-
-        static boolean isNE(char c) {
-            return c == 'L';
-        }
-
-        static boolean isNW(char c) {
-            return c == 'J';
-        }
-
-        static boolean isSW(char c) {
-            return c == '7';
-        }
-
-        static boolean isSE(char c) {
-            return c == 'F';
-        }
-
-        static boolean isGround(char c) {
-            return c == '.';
-        }
-
-        static boolean isStart(char c) {
-            return c == 'S';
-        }
-
-        static boolean canGoNorth(char c) {
-            return isSW(c) || isNS(c) || isSE(c);
-        }
-
-        static boolean canGoEast(char c) {
-            return isNW(c) || isEW(c) || isSW(c);
-        }
-
-        static boolean canGoSouth(char c) {
-            return isNW(c) || isNS(c) || isNE(c);
-        }
-
-        static boolean canGoWest(char c) {
-            return isNE(c) || isEW(c) || isSE(c);
-        }
-    }
-
     static class PipeGrid extends CharGrid {
 
         private final Position start;
@@ -206,14 +153,54 @@ public class Day10 {
             start = findStart();
         }
 
-        private char at(Position position) {
-            return points[position.y()][position.x()];
+        boolean isNS(int x, int y) {
+            return points[y][x] == '|';
+        }
+
+        boolean isEW(int x, int y) {
+            return points[y][x] == '-';
+        }
+
+        boolean isNE(int x, int y) {
+            return points[y][x] == 'L';
+        }
+
+        boolean isNW(int x, int y) {
+            return points[y][x] == 'J';
+        }
+
+        boolean isSW(int x, int y) {
+            return points[y][x] == '7';
+        }
+
+        boolean isSE(int x, int y) {
+            return points[y][x] == 'F';
+        }
+
+        boolean isStart(int x, int y) {
+            return points[y][x] == 'S';
+        }
+
+        boolean canGoNorth(Position p) {
+            return isSW(p.x(), p.y()) || isNS(p.x(), p.y()) || isSE(p.x(), p.y());
+        }
+
+        boolean canGoEast(Position p) {
+            return isNW(p.x(), p.y()) || isEW(p.x(), p.y()) || isSW(p.x(), p.y());
+        }
+
+        boolean canGoSouth(Position p) {
+            return isNW(p.x(), p.y()) || isNS(p.x(), p.y()) || isNE(p.x(), p.y());
+        }
+
+        boolean canGoWest(Position p) {
+            return isNE(p.x(), p.y()) || isEW(p.x(), p.y()) || isSE(p.x(), p.y());
         }
 
         private Position findStart() {
             for (int y = 0; y < height + 2; y++) {
                 for (int x = 0; x < width + 2; x++) {
-                    if (isStart(points[y][x])) {
+                    if (isStart(x, y)) {
                         return new Position(x, y);
                     }
                 }
@@ -221,71 +208,103 @@ public class Day10 {
             throw new IllegalStateException("No start found");
         }
 
-        private boolean inside(Position position, Set<Position> loop) {
-            return insideToTheEast(position, loop).orElseGet(() -> insideToTheWest(position, loop));
+        private boolean isInside(int x, int y, Loop loop) {
+            // As I don't know how to deal with the start position, as I only need to count in
+            // one direction, I count
+            // tp the east but, if I find the start in this direction, I use the counter going to
+            // the west (which will
+            // not have the start node)
+            return insideToTheEast(x, y, loop)
+                    .orElseGet(() -> insideToTheWest(x, y, loop));
         }
 
-        public Optional<Boolean> insideToTheEast(Position position, Set<Position> loop) {
-            var counter = 0;
+        public Optional<Boolean> insideToTheEast(int x, int y, Loop loop) {
+            var crossings = 0;
             var fromNorth = false;
             var fromSouth = false;
-            for (int xx = position.x() + 1; xx < width + 1; xx++) {
-                var currentPos = new Position(xx, position.y());
-                if (!loop.contains(currentPos)) continue;
-                var current = at(currentPos);
-                if (isStart(current)) {
+            for (int xx = x + 1; xx < width + 1; xx++) {
+                // I only need to count the crossings with tiles in the loop
+                if (!loop.contains(xx, y)) continue;
+                if (isStart(xx, y)) {
+                    // I do not know how to deal with it, so I fail
                     return Optional.empty();
-                } else if (isNS(current)) {
-                    counter++;
-                } else if (isNE(current)) {
+                } else if (isNS(xx, y)) {
+                    // If it is a | is a crossing
+                    assert !fromNorth && !fromSouth;
+                    crossings++;
+                } else if (isNE(xx, y)) {
+                    // If it is an J it will be a crossing depending on how it ends
+                    assert !fromNorth && !fromSouth;
                     fromNorth = true;
-                } else if (isSE(current)) {
+                } else if (isSE(xx, y)) {
+                    // If it is an F it will be a crossing depending on how it ends
+                    assert !fromNorth && !fromSouth;
                     fromSouth = true;
-                } else if (isNW(current)) {
-                    if (fromSouth) counter++;
+                } else if (isNW(xx, y)) {
+                    // If it is a J is only a crossing if, on this line, we have found an F (both are equivalent
+                    // to a | as if we pull them from the north and south extremes)
+                    // If we come from an L this is not a crossing (we pull both ends from the north)
+                    // In either case we clear the flags
+                    assert fromNorth || fromSouth;
+                    if (fromSouth) crossings++;
                     fromNorth = fromSouth = false;
-                } else if (isSW(current)) {
-                    if (fromNorth) counter++;
+                } else if (isSW(xx, y)) {
+                    // If it is a 7 is only a crossing if, on this line, we have found an L (both are equivalent
+                    // to a | as if we pull them from the north and south extremes)
+                    // If we come from an F this is not a crossing (we pull both ends from the south)
+                    // In either case we clear the flags;
+                    assert fromNorth || fromSouth;
+                    if (fromNorth) crossings++;
                     fromNorth = fromSouth = false;
                 }
             }
-            return Optional.of(counter % 2 == 1);
+            return Optional.of(crossings % 2 == 1);
         }
 
 
-        public boolean insideToTheWest(Position position, Set<Position> loop) {
-            var counter = 0;
+        public boolean insideToTheWest(int x, int y, Loop loop) {
+            var crossings = 0;
             var fromNorth = false;
             var fromSouth = false;
-            for (int xx = position.x() - 1; xx >= 0; xx--) {
-                var currentPos = new Position(xx, position.y());
-                if (!loop.contains(currentPos)) continue;
-                var current = at(currentPos);
-                if (isStart(current)) {
+            for (int xx = x - 1; xx >= 0; xx--) {
+                // I only need to count the crossings with tiles in the loop
+                if (!loop.contains(xx, y)) continue;
+                if (isStart(xx, y)) {
+                    // Cannot happen !!
                     throw new IllegalStateException("start should not be on this path");
-                } else if (isNS(current)) {
-                    counter++;
-                } else if (isNW(current)) {
+                } else if (isNS(xx, y)) {
+                    // If it is a | is a crossing
+                    crossings++;
+                } else if (isNW(xx, y)) {
+                    // If it is an J it will be a crossing depending on how it ends
                     fromNorth = true;
-                } else if (isSW(current)) {
+                } else if (isSW(xx, y)) {
+                    // If it is an 7 it will be a crossing depending on how it ends
                     fromSouth = true;
-                } else if (isSE(current)) {
-                    if (fromNorth) counter++;
+                } else if (isSE(xx, y)) {
+                    // If it is an F is only a crossing if, on this line, we have found a J (both are equivalent
+                    // to a | as if we pull them from the north and south extremes)
+                    // If we come from a 7 this is not a crossing (we pull both ends from the south)
+                    // In either case we clear the flags
+                    if (fromNorth) crossings++;
                     fromNorth = fromSouth = false;
-                } else if (isNE(current)) {
-                    if (fromSouth) counter++;
+                } else if (isNE(xx, y)) {
+                    // If it is an L is only a crossing if, on this line, we have found a 7 (both are equivalent
+                    // to a | as if we pull them from the north and south extremes)
+                    // If we come from an J this is not a crossing (we pull both ends from the north)
+                    // In either case we clear the flags;
+                    if (fromSouth) crossings++;
                     fromNorth = fromSouth = false;
                 }
             }
-            return counter % 2 == 1;
+            return crossings % 2 == 1;
         }
 
-        public int inside(Set<Position> loop) {
+        public int countInsideNodes(Loop loop) {
             var inside = 0;
             for (int y = 1; y < height + 1; y++) {
                 for (int x = 1; x < width + 1; x++) {
-                    var position = new Position(x, y);
-                    if (!loop.contains(position) && inside(position, loop)) {
+                    if (!loop.contains(x, y) && isInside(x, y, loop)) {
                         inside++;
                     }
                 }
@@ -293,7 +312,19 @@ public class Day10 {
             return inside;
         }
 
-        record Loop(Set<Position> positions, int length) {
+        record Loop(Set<Position> positions) {
+
+            boolean contains(Position position) {
+                return positions.contains(position);
+            }
+
+            boolean contains(int x, int y) {
+                return contains(new Position(x, y));
+            }
+
+            int length() {
+                return positions.size() / 2;
+            }
         }
 
         private Loop bfs(Position start) {
@@ -314,42 +345,43 @@ public class Day10 {
                     }
                 }
             }
-            return new Loop(distance.keySet(), Collections.max(distance.values()));
+            return new Loop(distance.keySet());
         }
 
         private void addIfValid(Collection<Position> positions, Predicate<Position> isValid,
-                                Position current, Position next) {
+                                Position next) {
             if (isValid.test(next)) {
                 positions.add(next);
             }
         }
 
         private List<Position> validNextPositions(Position position) {
-            var current = at(position);
             var nextPositions = new ArrayList<Position>();
-            if (isStart(current)) {
-                addIfValid(nextPositions, p -> canGoNorth(at(p)), position, position.north());
-                addIfValid(nextPositions, p -> canGoEast(at(p)), position, position.east());
-                addIfValid(nextPositions, p -> canGoSouth(at(p)), position, position.south());
-                addIfValid(nextPositions, p -> canGoWest(at(p)), position, position.west());
-            } else if (isNE(current)) {
-                addIfValid(nextPositions, p -> canGoNorth(at(p)), position, position.north());
-                addIfValid(nextPositions, p -> canGoEast(at(p)), position, position.east());
-            } else if (isNW(current)) {
-                addIfValid(nextPositions, p -> canGoNorth(at(p)), position, position.north());
-                addIfValid(nextPositions, p -> canGoWest(at(p)), position, position.west());
-            } else if (isSE(current)) {
-                addIfValid(nextPositions, p -> canGoEast(at(p)), position, position.east());
-                addIfValid(nextPositions, p -> canGoSouth(at(p)), position, position.south());
-            } else if (isSW(current)) {
-                addIfValid(nextPositions, p -> canGoSouth(at(p)), position, position.south());
-                addIfValid(nextPositions, p -> canGoWest(at(p)), position, position.west());
-            } else if (isNS(current)) {
-                addIfValid(nextPositions, p -> canGoNorth(at(p)), position, position.north());
-                addIfValid(nextPositions, p -> canGoSouth(at(p)), position, position.south());
-            } else if (isEW(current)) {
-                addIfValid(nextPositions, p -> canGoEast(at(p)), position, position.east());
-                addIfValid(nextPositions, p -> canGoWest(at(p)), position, position.west());
+            int x = position.x();
+            int y = position.y();
+            if (isStart(x, y)) {
+                addIfValid(nextPositions, this::canGoNorth, position.north());
+                addIfValid(nextPositions, this::canGoEast, position.east());
+                addIfValid(nextPositions, this::canGoSouth, position.south());
+                addIfValid(nextPositions, this::canGoWest, position.west());
+            } else if (isNE(x, y)) {
+                addIfValid(nextPositions, this::canGoNorth, position.north());
+                addIfValid(nextPositions, this::canGoEast, position.east());
+            } else if (isNW(x, y)) {
+                addIfValid(nextPositions, this::canGoNorth, position.north());
+                addIfValid(nextPositions, this::canGoWest, position.west());
+            } else if (isSE(x, y)) {
+                addIfValid(nextPositions, this::canGoEast, position.east());
+                addIfValid(nextPositions, this::canGoSouth, position.south());
+            } else if (isSW(x, y)) {
+                addIfValid(nextPositions, this::canGoSouth, position.south());
+                addIfValid(nextPositions, this::canGoWest, position.west());
+            } else if (isNS(x, y)) {
+                addIfValid(nextPositions, this::canGoNorth, position.north());
+                addIfValid(nextPositions, this::canGoSouth, position.south());
+            } else if (isEW(x, y)) {
+                addIfValid(nextPositions, this::canGoEast, position.east());
+                addIfValid(nextPositions, this::canGoWest, position.west());
             }
             return nextPositions;
         }
@@ -472,7 +504,7 @@ public class Day10 {
     int part2(List<String> data) {
         var pipeGrid = new PipeGrid(data);
         var loop = pipeGrid.bfs(pipeGrid.start);
-        return pipeGrid.inside(loop.positions());
+        return pipeGrid.countInsideNodes(loop);
     }
 
     public static void main(String[] args) {
