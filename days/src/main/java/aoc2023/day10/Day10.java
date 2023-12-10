@@ -221,112 +221,69 @@ public class Day10 {
             throw new IllegalStateException("No start found");
         }
 
-        private static boolean connectsHorizontally(char l, char r) {
-            if (isStart(l)) {
-                return isEW(r) || isSW(r) || isNW(r);
-            } else if (isEW(l)) {
-                return isEW(r) || isSW(r) || isNW(r) || isStart(r);
-            } else if (isSE(l)) {
-                return isEW(r) || isSW(r) || isNW(r) || isStart(r);
-            } else if (isNE(l)) {
-                return isEW(r) || isSW(r) || isNW(r) || isStart(r);
-            }
-            return false;
-        }
-
-        public int[] countEastCrossings(int y, Set<Position> loop) {
-            var crossings = new int[width + 2];
-            var inPipe = false;
-            for (int x = width; x >= 1; x--) {
-                var current = at(new Position(x, y));
-                if (isSW(current) || isNW(current)) {
-                    assert !inPipe;
-                    inPipe = true;
-                    crossings[x] = crossings[x + 1] + 1;
-                } else if (isSE(current) || isNE(current)) {
-                    assert inPipe;
-                    inPipe = false;
-                    crossings[x] = crossings[x + 1];
-                } else if (isEW(current)) {
-                    assert inPipe;
-                    crossings[x] = crossings[x + 1];
-                } else if (isStart(current)) {
-                    if (!inPipe) {
-                        crossings[x] = crossings[x + 1];
-                    } else {
-                        crossings[x] = crossings[x + 1] + 1;
-                    }
-                    var next = new Position(x - 1, y);
-                    inPipe = connectsHorizontally(at(next), current);
-                } else if (isNS(current)) {
-                    crossings[x] = crossings[x + 1] + 1;
-                } else {
-                    crossings[x] = crossings[x + 1];
-                }
-            }
-            System.out.println("y = " + y + " crossings = " + Arrays.toString(crossings));
-            return crossings;
-        }
-
-        public int countAsParenthesesNorth(Position position) {
+        public int countNorth(Position position, Set<Position> loop) {
             var counter = 0;
             for (int yy = position.y() - 1; yy >= 0; yy--) {
                 var currentPos = new Position(position.x(), yy);
+                if (!loop.contains(currentPos)) continue;
                 var current = at(currentPos);
-                if (isEW(current)) {
-                    counter++;
-                } else if (isNE(current) || isNW(current)) {
+                if (isEW(current) || isNE(current) || isNW(current)) {
                     counter++;
                 } else if (isSE(current) || isSW(current)) {
                     counter--;
+                } else if (isStart(current)) {
+                    // TODO
                 }
             }
             return counter;
         }
 
-        public int countAsParenthesesEast(Position position) {
+        public int countEast(Position position, Set<Position> loop) {
             var counter = 0;
             for (int xx = position.x() + 1; xx < width + 1; xx++) {
                 var currentPos = new Position(xx, position.y());
+                if (!loop.contains(currentPos)) continue;
                 var current = at(currentPos);
-                if (isNS(current)) {
-                    counter++;
-                } else if (isNE(current) || isSE(current)) {
+                if (isNS(current) || isNE(current) || isSE(current)) {
                     counter++;
                 } else if (isNW(current) || isSW(current)) {
                     counter--;
+                } else if (isStart(current)) {
+                    // TODO
                 }
             }
             return counter;
         }
 
-        public int countAsParenthesesSouth(Position position) {
+        public int countSouth(Position position, Set<Position> loop) {
             var counter = 0;
             for (int yy = position.y() + 1; yy < height + 1; yy++) {
                 var currentPos = new Position(position.x(), yy);
+                if (!loop.contains(currentPos)) continue;
                 var current = at(currentPos);
-                if (isEW(current)) {
-                    counter++;
-                } else if (isSE(current) || isSW(current)) {
+                if (isEW(current) || isSE(current) || isSW(current)) {
                     counter++;
                 } else if (isNE(current) || isNW(current)) {
                     counter--;
+                } else if (isStart(current)) {
+                    // TODO
                 }
             }
             return counter;
         }
 
-        public int countAsParenthesesWest(Position position) {
+        public int countWest(Position position, Set<Position> loop) {
             var counter = 0;
             for (int xx = position.x() - 1; xx >= 0; xx--) {
                 var currentPos = new Position(xx, position.y());
+                if (!loop.contains(currentPos)) continue;
                 var current = at(currentPos);
-                if (isNS(current)) {
-                    counter++;
-                } else if (isNW(current) || isSW(current)) {
+                if (isNS(current) || isNW(current) || isSW(current)) {
                     counter++;
                 } else if (isNE(current) || isSE(current)) {
                     counter--;
+                } else if (isStart(current)) {
+                    // TODO
                 }
             }
             return counter;
@@ -334,26 +291,20 @@ public class Day10 {
 
         public int inside(Set<Position> loop) {
             var inside = 0;
-            var pp = new ArrayList<Position>();
             for (int y = 1; y < height + 1; y++) {
-                var eastCrossings = countEastCrossings(y, loop);
                 for (int x = 1; x < width + 1; x++) {
                     var position = new Position(x, y);
                     if (!loop.contains(position)) {
-                        //int east = eastCrossings[x];
-                        int north = countAsParenthesesNorth(position);
-                        int east = countAsParenthesesEast(position);
-                        int south = countAsParenthesesSouth(position);
-                        int west = countAsParenthesesWest(position);
+                        int north = countNorth(position, loop);
+                        int east = countEast(position, loop);
+                        int south = countSouth(position, loop);
+                        int west = countWest(position, loop);
                         if (north % 2 == 1 && east % 2 == 1 && south % 2 == 1 && west % 2 == 1) {
-                            System.out.println("position " + position + "crossings = " + east);
-                            pp.add(position);
                             inside++;
                         }
                     }
                 }
             }
-            System.out.println("inside positions = " + pp);
             return inside;
         }
 
