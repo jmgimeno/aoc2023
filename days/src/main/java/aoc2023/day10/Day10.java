@@ -153,54 +153,34 @@ public class Day10 {
             start = findStart();
         }
 
-        boolean isNS(int x, int y) {
-            return points[y][x] == '|';
-        }
-
-        boolean isEW(int x, int y) {
-            return points[y][x] == '-';
-        }
-
-        boolean isNE(int x, int y) {
-            return points[y][x] == 'L';
-        }
-
-        boolean isNW(int x, int y) {
-            return points[y][x] == 'J';
-        }
-
-        boolean isSW(int x, int y) {
-            return points[y][x] == '7';
-        }
-
-        boolean isSE(int x, int y) {
-            return points[y][x] == 'F';
-        }
-
-        boolean isStart(int x, int y) {
-            return points[y][x] == 'S';
-        }
-
         boolean canGoNorth(Position p) {
-            return isSW(p.x(), p.y()) || isNS(p.x(), p.y()) || isSE(p.x(), p.y());
+            return "7|F".indexOf(at(p)) != -1;
+        }
+
+        private char at(Position p) {
+            return at(p.x(), p.y());
+        }
+
+        private char at(int x, int y) {
+            return points[y][x];
         }
 
         boolean canGoEast(Position p) {
-            return isNW(p.x(), p.y()) || isEW(p.x(), p.y()) || isSW(p.x(), p.y());
+            return "J-7".indexOf(at(p)) != -1;
         }
 
         boolean canGoSouth(Position p) {
-            return isNW(p.x(), p.y()) || isNS(p.x(), p.y()) || isNE(p.x(), p.y());
+            return "J|L".indexOf(at(p)) != -1;
         }
 
         boolean canGoWest(Position p) {
-            return isNE(p.x(), p.y()) || isEW(p.x(), p.y()) || isSE(p.x(), p.y());
+            return "L-F".indexOf(at(p)) != -1;
         }
 
         private Position findStart() {
             for (int y = 0; y < height + 2; y++) {
                 for (int x = 0; x < width + 2; x++) {
-                    if (isStart(x, y)) {
+                    if (at(x, y) == 'S') {
                         return new Position(x, y);
                     }
                 }
@@ -225,37 +205,48 @@ public class Day10 {
             for (int xx = x + 1; xx < width + 1; xx++) {
                 // I only need to count the crossings with tiles in the loop
                 if (!loop.contains(xx, y)) continue;
-                if (isStart(xx, y)) {
-                    // I do not know how to deal with it, so I fail
-                    return Optional.empty();
-                } else if (isNS(xx, y)) {
-                    // If it is a | is a crossing
-                    assert !fromNorth && !fromSouth;
-                    crossings++;
-                } else if (isNE(xx, y)) {
-                    // If it is an J it will be a crossing depending on how it ends
-                    assert !fromNorth && !fromSouth;
-                    fromNorth = true;
-                } else if (isSE(xx, y)) {
-                    // If it is an F it will be a crossing depending on how it ends
-                    assert !fromNorth && !fromSouth;
-                    fromSouth = true;
-                } else if (isNW(xx, y)) {
-                    // If it is a J is only a crossing if, on this line, we have found an F (both are equivalent
-                    // to a | as if we pull them from the north and south extremes)
-                    // If we come from an L this is not a crossing (we pull both ends from the north)
-                    // In either case we clear the flags
-                    assert fromNorth || fromSouth;
-                    if (fromSouth) crossings++;
-                    fromNorth = fromSouth = false;
-                } else if (isSW(xx, y)) {
-                    // If it is a 7 is only a crossing if, on this line, we have found an L (both are equivalent
-                    // to a | as if we pull them from the north and south extremes)
-                    // If we come from an F this is not a crossing (we pull both ends from the south)
-                    // In either case we clear the flags;
-                    assert fromNorth || fromSouth;
-                    if (fromNorth) crossings++;
-                    fromNorth = fromSouth = false;
+                switch (at(xx, y)) {
+                    case 'S' -> {
+                        // I do not know how to deal with it, so I fail
+                        return Optional.empty();
+                    }
+                    case '|' -> {
+                        // If it is a | is a crossing
+                        assert !fromNorth && !fromSouth;
+                        crossings++;
+                    }
+                    case 'L' -> {
+                        // If it is an J it will be a crossing depending on how it ends
+                        assert !fromNorth && !fromSouth;
+                        fromNorth = true;
+                    }
+                    case 'F' -> {
+                        // If it is an F it will be a crossing depending on how it ends
+                        assert !fromNorth && !fromSouth;
+                        fromSouth = true;
+                    }
+                    case 'J' -> {
+                        // If it is a J is only a crossing if, on this line, we have found an F
+                        // (both are equivalent
+                        // to a | as if we pull them from the north and south extremes)
+                        // If we come from an L this is not a crossing (we pull both ends from
+                        // the north)
+                        // In either case we clear the flags
+                        assert fromNorth || fromSouth;
+                        if (fromSouth) crossings++;
+                        fromNorth = fromSouth = false;
+                    }
+                    case '7' -> {
+                        // If it is a 7 is only a crossing if, on this line, we have found an L
+                        // (both are equivalent
+                        // to a | as if we pull them from the north and south extremes)
+                        // If we come from an F this is not a crossing (we pull both ends from
+                        // the south)
+                        // In either case we clear the flags;
+                        assert fromNorth || fromSouth;
+                        if (fromNorth) crossings++;
+                        fromNorth = fromSouth = false;
+                    }
                 }
             }
             return Optional.of(crossings % 2 == 1);
@@ -269,32 +260,41 @@ public class Day10 {
             for (int xx = x - 1; xx >= 0; xx--) {
                 // I only need to count the crossings with tiles in the loop
                 if (!loop.contains(xx, y)) continue;
-                if (isStart(xx, y)) {
-                    // Cannot happen !!
-                    throw new IllegalStateException("start should not be on this path");
-                } else if (isNS(xx, y)) {
-                    // If it is a | is a crossing
-                    crossings++;
-                } else if (isNW(xx, y)) {
-                    // If it is an J it will be a crossing depending on how it ends
-                    fromNorth = true;
-                } else if (isSW(xx, y)) {
-                    // If it is an 7 it will be a crossing depending on how it ends
-                    fromSouth = true;
-                } else if (isSE(xx, y)) {
-                    // If it is an F is only a crossing if, on this line, we have found a J (both are equivalent
-                    // to a | as if we pull them from the north and south extremes)
-                    // If we come from a 7 this is not a crossing (we pull both ends from the south)
-                    // In either case we clear the flags
-                    if (fromNorth) crossings++;
-                    fromNorth = fromSouth = false;
-                } else if (isNE(xx, y)) {
-                    // If it is an L is only a crossing if, on this line, we have found a 7 (both are equivalent
-                    // to a | as if we pull them from the north and south extremes)
-                    // If we come from an J this is not a crossing (we pull both ends from the north)
-                    // In either case we clear the flags;
-                    if (fromSouth) crossings++;
-                    fromNorth = fromSouth = false;
+                switch (at(xx, y)) {
+                    case 'S' ->
+                        // Cannot happen !!
+                            throw new IllegalStateException("start should not be on this path");
+                    case '|' ->
+                        // If it is a | is a crossing
+                            crossings++;
+                    case 'J' ->
+                        // If it is an J it will be a crossing depending on how it ends
+                            fromNorth = true;
+                    case '7' ->
+                        // If it is an 7 it will be a crossing depending on how it ends
+                            fromSouth = true;
+                    case 'F' -> {
+                        // If it is an F is only a crossing if, on this line, we have found a J
+                        // (both
+                        // are equivalent
+                        // to a | as if we pull them from the north and south extremes)
+                        // If we come from a 7 this is not a crossing (we pull both ends from the
+                        // south)
+                        // In either case we clear the flags
+                        if (fromNorth) crossings++;
+                        fromNorth = fromSouth = false;
+                    }
+                    case 'L' -> {
+                        // If it is an L is only a crossing if, on this line, we have found a 7
+                        // (both
+                        // are equivalent
+                        // to a | as if we pull them from the north and south extremes)
+                        // If we come from an J this is not a crossing (we pull both ends from the
+                        // north)
+                        // In either case we clear the flags;
+                        if (fromSouth) crossings++;
+                        fromNorth = fromSouth = false;
+                    }
                 }
             }
             return crossings % 2 == 1;
@@ -357,31 +357,37 @@ public class Day10 {
 
         private List<Position> validNextPositions(Position position) {
             var nextPositions = new ArrayList<Position>();
-            int x = position.x();
-            int y = position.y();
-            if (isStart(x, y)) {
-                addIfValid(nextPositions, this::canGoNorth, position.north());
-                addIfValid(nextPositions, this::canGoEast, position.east());
-                addIfValid(nextPositions, this::canGoSouth, position.south());
-                addIfValid(nextPositions, this::canGoWest, position.west());
-            } else if (isNE(x, y)) {
-                addIfValid(nextPositions, this::canGoNorth, position.north());
-                addIfValid(nextPositions, this::canGoEast, position.east());
-            } else if (isNW(x, y)) {
-                addIfValid(nextPositions, this::canGoNorth, position.north());
-                addIfValid(nextPositions, this::canGoWest, position.west());
-            } else if (isSE(x, y)) {
-                addIfValid(nextPositions, this::canGoEast, position.east());
-                addIfValid(nextPositions, this::canGoSouth, position.south());
-            } else if (isSW(x, y)) {
-                addIfValid(nextPositions, this::canGoSouth, position.south());
-                addIfValid(nextPositions, this::canGoWest, position.west());
-            } else if (isNS(x, y)) {
-                addIfValid(nextPositions, this::canGoNorth, position.north());
-                addIfValid(nextPositions, this::canGoSouth, position.south());
-            } else if (isEW(x, y)) {
-                addIfValid(nextPositions, this::canGoEast, position.east());
-                addIfValid(nextPositions, this::canGoWest, position.west());
+            switch (at(position)) {
+                case 'S' -> {
+                    addIfValid(nextPositions, this::canGoNorth, position.north());
+                    addIfValid(nextPositions, this::canGoEast, position.east());
+                    addIfValid(nextPositions, this::canGoSouth, position.south());
+                    addIfValid(nextPositions, this::canGoWest, position.west());
+                }
+                case 'L' -> {
+                    addIfValid(nextPositions, this::canGoNorth, position.north());
+                    addIfValid(nextPositions, this::canGoEast, position.east());
+                }
+                case 'J' -> {
+                    addIfValid(nextPositions, this::canGoNorth, position.north());
+                    addIfValid(nextPositions, this::canGoWest, position.west());
+                }
+                case 'F' -> {
+                    addIfValid(nextPositions, this::canGoEast, position.east());
+                    addIfValid(nextPositions, this::canGoSouth, position.south());
+                }
+                case '7' -> {
+                    addIfValid(nextPositions, this::canGoSouth, position.south());
+                    addIfValid(nextPositions, this::canGoWest, position.west());
+                }
+                case '|' -> {
+                    addIfValid(nextPositions, this::canGoNorth, position.north());
+                    addIfValid(nextPositions, this::canGoSouth, position.south());
+                }
+                case '-' -> {
+                    addIfValid(nextPositions, this::canGoEast, position.east());
+                    addIfValid(nextPositions, this::canGoWest, position.west());
+                }
             }
             return nextPositions;
         }
