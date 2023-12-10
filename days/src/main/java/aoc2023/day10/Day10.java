@@ -232,7 +232,15 @@ public class Day10 {
                 } else if (isSE(current) || isSW(current)) {
                     counter--;
                 } else if (isStart(current)) {
-                    // TODO
+                    var prev = new Position(position.x(), yy + 1);
+                    var next = new Position(position.x(), yy - 1);
+                    if (!loop.contains(prev)) {
+                        // start begins
+                        counter++;
+                    } else if (loop.contains(next)) {
+                        // start ends
+                        counter--;
+                    }
                 }
             }
             return counter;
@@ -249,7 +257,15 @@ public class Day10 {
                 } else if (isNW(current) || isSW(current)) {
                     counter--;
                 } else if (isStart(current)) {
-                    // TODO
+                    var prev = new Position(xx - 1, position.y());
+                    var next = new Position(xx + 1, position.y());
+                    if (!loop.contains(prev)) {
+                        // start begins
+                        counter++;
+                    } else if (loop.contains(next)) {
+                        // start ends
+                        counter--;
+                    }
                 }
             }
             return counter;
@@ -266,7 +282,15 @@ public class Day10 {
                 } else if (isNE(current) || isNW(current)) {
                     counter--;
                 } else if (isStart(current)) {
-                    // TODO
+                    var prev = new Position(position.x(), yy - 1);
+                    var next = new Position(position.x(), yy + 1);
+                    if (!loop.contains(prev)) {
+                        // start begins
+                        counter++;
+                    } else if (loop.contains(next)) {
+                        // start ends
+                        counter--;
+                    }
                 }
             }
             return counter;
@@ -283,7 +307,15 @@ public class Day10 {
                 } else if (isNE(current) || isSE(current)) {
                     counter--;
                 } else if (isStart(current)) {
-                    // TODO
+                    var prev = new Position(xx + 1, position.y());
+                    var next = new Position(xx - 1, position.y());
+                    if (!loop.contains(prev) ) {
+                        // start begins
+                        counter++;
+                    } else if (loop.contains(next)) {
+                        // start ends
+                        counter--;
+                    }
                 }
             }
             return counter;
