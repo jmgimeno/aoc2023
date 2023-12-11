@@ -126,7 +126,7 @@ public class Day11 {
             return Math.abs(x - other.x) + Math.abs(y - other.y);
         }
     }
-    class Image extends CharGrid {
+    static class Image extends CharGrid {
         List<Galaxy> galaxies;
         Set<Integer> emptyRows;
         Set<Integer> emptyCols;
