@@ -153,18 +153,16 @@ public class Day11 {
         public long distance(Galaxy g1, Galaxy g2, int factor) {
             var min = new Galaxy(Math.min(g1.x, g2.x), Math.min(g1.y, g2.y));
             var max = new Galaxy(Math.max(g1.x, g2.x), Math.max(g1.y, g2.y));
-            var expandedRows = expandedBetween(Math.min(g1.x, g2.x), Math.max(g1.x, g2.x), emptyCols);
-            var expandedCols = expandedBetween(Math.min(g1.y, g2.y), Math.max(g1.y, g2.y), emptyRows);
-            var expandedMax = new Galaxy(max.x + factor * expandedCols, max.y + factor * expandedRows);
+            var expandedCols = expandedBetween(min.x, max.x, emptyCols);
+            var expandedRows = expandedBetween(min.y, max.y, emptyRows);
+            var expandedMax = new Galaxy(
+                    max.x + (factor - 1) * expandedCols,
+                    max.y + (factor - 1) * expandedRows);
             return min.distance(expandedMax);
         }
 
         private int expandedBetween(int min, int max, Set<Integer> empty) {
-            int between = 0;
-            for (int i = min + 1; i < max; i++)
-                if (empty.contains(i))
-                    between++;
-            return between;
+            return (int) IntStream.range(min + 1, max).filter(empty::contains).count();
         }
 
         public long allDistances(int factor) {
@@ -179,8 +177,7 @@ public class Day11 {
     }
 
     long part1(List<String> data) {
-        var image = new Image(data);
-        return image.allDistances(1);
+        return new Image(data).allDistances(2);
     }
 
     /*
@@ -208,8 +205,7 @@ public class Day11 {
     */
 
     long part2(List<String> data) {
-        var image = new Image(data);
-        return image.allDistances(1_000_000);
+        return new Image(data).allDistances(1_000_000);
     }
 
     public static void main(String[] args) {
