@@ -28,28 +28,36 @@ class Day11Test {
     @DisplayName("part1 - example data")
     void test1() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(374, day11.part1(data));
+        assertEquals(374L, day11.part1(data));
     }
 
     @Test
     @DisplayName("part1 - input data")
     void test2() {
         var data = IO.getResourceAsList("day11.txt");
-        assertEquals(9177603, day11.part1(data));
+        assertEquals(9177603L, day11.part1(data));
     }
 
     @Test
-    @DisplayName("part2 - example data")
-    @Disabled("part2 - not implemented")
+    @DisplayName("part2 - example data expanded 10")
     void test3() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(-1, day11.part2(data));
+        var image = new Day11.Image(data);
+        assertEquals(1030L, image.allDistances(10));
+    }
+
+    @Test
+    @DisplayName("part2 - example data expanded 100")
+    void test4() {
+        var data = IO.splitLinesAsList(example);
+        var image = new Day11.Image(data);
+        assertEquals(8410L, image.allDistances(100));
     }
 
     @Test
     @DisplayName("part2 - input data")
     @Disabled("part2 - not implemented")
-    void test4() {
+    void test5() {
         var data = IO.getResourceAsList("day11.txt");
         assertEquals(-1, day11.part2(data));
     }

@@ -126,6 +126,7 @@ public class Day11 {
             return Math.abs(x - other.x) + Math.abs(y - other.y);
         }
     }
+
     static class Image extends CharGrid {
         List<Galaxy> galaxies;
         Set<Integer> emptyRows;
@@ -140,7 +141,7 @@ public class Day11 {
             galaxies = new ArrayList<>();
             emptyRows = new HashSet<>(IntStream.rangeClosed(1, width).boxed().toList());
             emptyCols = new HashSet<>(IntStream.rangeClosed(1, height).boxed().toList());
-            for (int y = 1 ; y < height+ 1; y++)
+            for (int y = 1; y < height + 1; y++)
                 for (int x = 1; x < width + 1; x++)
                     if (points[y][x] == '#') {
                         galaxies.add(new Galaxy(x, y));
@@ -149,13 +150,13 @@ public class Day11 {
                     }
         }
 
-        public int distance(Galaxy g1, Galaxy g2) {
-            return g1.distance(g2) + expandedBetween(g1, g2);
-        }
-
-        private int expandedBetween(Galaxy g1, Galaxy g2) {
-            return expandedBetween(Math.min(g1.x, g2.x), Math.max(g1.x, g2.x), emptyCols)
-                    + expandedBetween(Math.min(g1.y, g2.y), Math.max(g1.y, g2.y), emptyRows);
+        public long distance(Galaxy g1, Galaxy g2, int factor) {
+            var min = new Galaxy(Math.min(g1.x, g2.x), Math.min(g1.y, g2.y));
+            var max = new Galaxy(Math.max(g1.x, g2.x), Math.max(g1.y, g2.y));
+            var expandedRows = expandedBetween(Math.min(g1.x, g2.x), Math.max(g1.x, g2.x), emptyCols);
+            var expandedCols = expandedBetween(Math.min(g1.y, g2.y), Math.max(g1.y, g2.y), emptyRows);
+            var expandedMax = new Galaxy(max.x + factor * expandedCols, max.y + factor * expandedRows);
+            return min.distance(expandedMax);
         }
 
         private int expandedBetween(int min, int max, Set<Integer> empty) {
@@ -166,40 +167,49 @@ public class Day11 {
             return between;
         }
 
-        private int allDistances() {
-            int total = 0;
+        public long allDistances(int factor) {
+            long total = 0;
             for (int i = 0; i < galaxies.size(); i++) {
                 for (int j = i + 1; j < galaxies.size(); j++) {
-                    total += distance(galaxies.get(i), galaxies.get(j));
+                    total += distance(galaxies.get(i), galaxies.get(j), factor);
                 }
             }
             return total;
         }
     }
-    int part1(List<String> data) {
+
+    long part1(List<String> data) {
         var image = new Image(data);
-        return image.allDistances();
+        return image.allDistances(1);
     }
 
     /*
     --- Part Two ---
-    The galaxies are much older (and thus much farther apart) than the researcher initially estimated.
+    The galaxies are much older (and thus much farther apart) than the researcher initially
+    estimated.
 
-    Now, instead of the expansion you did before, make each empty row or column one million times larger.
-    That is, each empty row should be replaced with 1000000 empty rows, and each empty column should be
+    Now, instead of the expansion you did before, make each empty row or column one million times
+     larger.
+    That is, each empty row should be replaced with 1000000 empty rows, and each empty column
+    should be
     replaced with 1000000 empty columns.
 
-    (In the example above, if each empty row or column were merely 10 times larger, the sum of the shortest
-    paths between every pair of galaxies would be 1030. If each empty row or column were merely 100 times
-    larger, the sum of the shortest paths between every pair of galaxies would be 8410. However, your
+    (In the example above, if each empty row or column were merely 10 times larger, the sum of
+    the shortest
+    paths between every pair of galaxies would be 1030. If each empty row or column were merely
+    100 times
+    larger, the sum of the shortest paths between every pair of galaxies would be 8410. However,
+    your
     universe will need to expand far beyond these values.)
 
-    Starting with the same initial image, expand the universe according to these new rules, then find the
+    Starting with the same initial image, expand the universe according to these new rules, then
+    find the
     length of the shortest path between every pair of galaxies. What is the sum of these lengths?
     */
 
-    int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+    long part2(List<String> data) {
+        var image = new Image(data);
+        return image.allDistances(1_000_000);
     }
 
     public static void main(String[] args) {
@@ -207,7 +217,7 @@ public class Day11 {
         var data = IO.getResourceAsList("day11.txt");
         var part1 = day11.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day11.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day11.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
