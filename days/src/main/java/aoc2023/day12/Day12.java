@@ -190,20 +190,34 @@ public class Day12 {
             var normalizedConditions = normalizeConditions(condition);
             var normalizedLengths = normalizeLengths(lengths);
             var maxBrokenPrefix = maxBrokenPrefix(normalizedConditions);
+            System.out.println("------------------------------------------");
+            System.out.println("condition = " + condition);
+            System.out.println("lengths = " + lengths);
+            System.out.println("normalizedConditions = " + normalizedConditions);
+            System.out.println("normalizedLengths = " + normalizedLengths);
+            System.out.println("maxBrokenPrefix = " + maxBrokenPrefix);
             if (normalizedConditions.isEmpty()) {
-                return normalizedLengths.isEmpty() ? 1 : 0;
+                System.out.println("normalized conditions are empty");
+                int result = normalizedLengths.isEmpty() ? 1 : 0;
+                System.out.println("result = " + result);
+                return result;
             } else if (normalizedLengths.isEmpty()) {
+                System.out.println("normalized lengths are empty (but no normalized Conditions so 0)");
                 return 0;
             } else if (maxBrokenPrefix > 0) {
                 if (maxBrokenPrefix > normalizedLengths.getFirst()) {
+                    System.out.println("return 0 because prefix is longer that first block");
                     return 0;
                 } else {
                     var suffixConditions
-                            = maxBrokenPrefix != normalizedConditions.length()
-                            ? normalizedConditions.substring(maxBrokenPrefix + 1)
+                            = maxBrokenPrefix < normalizedConditions.length()
+                            ? normalizedConditions.substring(maxBrokenPrefix)
                             : "";
+                    System.out.println("suffixConditions = " + suffixConditions);
                     var newLengths = new ArrayList<>(normalizedLengths);
                     newLengths.set(0, normalizedLengths.getFirst() - maxBrokenPrefix);
+                    System.out.println("newLengths = " + newLengths);
+                    System.out.println("we call recursivelly (one call)");
                     return new Row(suffixConditions, newLengths).countArrangements();
                 }
 //                }
@@ -220,9 +234,13 @@ public class Day12 {
 //                    return 0;
 //                }
             } else {
-                String suffix = condition.substring(1);
-                var left = suffix;
+                assert normalizedConditions.charAt(0) == '?';
+                String suffix = normalizedConditions.substring(1);
+                var left = "." + suffix;
                 var right = "#" + suffix;
+                System.out.println("left = " + left);
+                System.out.println("right = " + right);
+                System.out.println("we call recursivelly (two calls)");
                 return new Row(left, normalizedLengths).countArrangements()
                         + new Row(right, normalizedLengths).countArrangements();
             }
