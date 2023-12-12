@@ -150,14 +150,16 @@ public class Day12 {
                 System.out.println("result = " + result);
                 return result;
             } else if (lengths.isEmpty()) {
-                System.out.println("normalized lengths are empty (but no normalized Conditions so 0)");
+                System.out.println("normalized lengths are empty (but no normalized Conditions so" +
+                        " 0)");
                 return 0;
             } else if (maxBrokenPrefix > 0) {
                 if (maxBrokenPrefix > lengths.getFirst()) {
                     System.out.println("return 0 because prefix is longer that first block");
                     return 0;
                 } else if (maxBrokenPrefix == lengths.getFirst()) {
-                    System.out.println("the length of the prefix is the same as the one in the list");
+                    System.out.println("the length of the prefix is the same as the one in the " +
+                            "list");
                     var suffixConditions = normalizedConditions.substring(maxBrokenPrefix);
                     System.out.println("suffixConditions = " + suffixConditions);
                     var newLengths = lengths.subList(1, lengths.size());
@@ -168,7 +170,8 @@ public class Day12 {
                         suffixConditions = "." + suffixConditions.substring(1);
                     return new Row(suffixConditions, newLengths).countArrangements();
                 } else {
-                    System.out.println("the length of the prefix is smaller than the first one in  the list");
+                    System.out.println("the length of the prefix is smaller than the first one in" +
+                            "  the list");
                     var suffixConditions = normalizedConditions.substring(maxBrokenPrefix);
                     System.out.println("suffixConditions = " + suffixConditions);
                     var newLengths = new ArrayList<>(lengths);
@@ -176,8 +179,13 @@ public class Day12 {
                     System.out.println("newLengths = " + newLengths);
                     System.out.println("we call recursivelly (one call)");
                     //  If the next character is ?, it must be converted into a '.'
-                    if (!suffixConditions.isEmpty())
-                        suffixConditions = "." + suffixConditions.substring(1);
+                    if (!suffixConditions.isEmpty()) {
+                        if (suffixConditions.charAt(0) == '.') {
+                            return 0;
+                        } else {
+                            suffixConditions = "#" + suffixConditions.substring(1);
+                        }
+                    }
                     return new Row(suffixConditions, newLengths).countArrangements();
                 }
             } else {
