@@ -75,7 +75,6 @@ class Day12Test {
         assertFalse(row.isEmpty());
         assertTrue(row.isFinal());
         assertTrue(row.allBroken());
-        assertTrue(row.firstIsBroken());
         assertFalse(row.allUnknown());
         assertFalse(row.oneUnknownFollowedByBroken());
         assertEquals(1, row.countArrangements());
@@ -88,7 +87,6 @@ class Day12Test {
         assertFalse(row.isEmpty());
         assertFalse(row.isFinal());
         assertFalse(row.allBroken());
-        assertFalse(row.firstIsBroken());
         assertTrue(row.allUnknown());
         assertFalse(row.oneUnknownFollowedByBroken());
         assertEquals(1, row.countArrangements());
@@ -101,7 +99,6 @@ class Day12Test {
         assertFalse(row.isEmpty());
         assertFalse(row.isFinal());
         assertFalse(row.allBroken());
-        assertFalse(row.firstIsBroken());
         assertFalse(row.allUnknown());
         assertFalse(row.oneUnknownFollowedByBroken());
     }
@@ -113,7 +110,6 @@ class Day12Test {
         assertFalse(row.isEmpty());
         assertFalse(row.isFinal());
         assertFalse(row.allBroken());
-        assertFalse(row.firstIsBroken());
         assertTrue(row.allUnknown());
         assertFalse(row.oneUnknownFollowedByBroken());
     }
@@ -125,7 +121,6 @@ class Day12Test {
         assertFalse(row.isEmpty());
         assertFalse(row.isFinal());
         assertFalse(row.allBroken());
-        assertFalse(row.firstIsBroken());
         assertFalse(row.allUnknown());
         assertFalse(row.oneUnknownFollowedByBroken());
     }

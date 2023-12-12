@@ -2,7 +2,6 @@ package aoc2023.day12;
 
 import aoc2023.utils.IO;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -180,13 +179,6 @@ public class Day12 {
 
         boolean isFinal() {
             return condition.chars().allMatch(c -> c == '.' || c == '#');
-        }
-
-        boolean isOK() {
-            assert isFinal();
-            var groups =
-                    Arrays.stream(condition.split("\\.+")).filter(s -> !s.isEmpty()).map(String::length).toList();
-            return groups.equals(lengths);
         }
 
         int countArrangements() {
