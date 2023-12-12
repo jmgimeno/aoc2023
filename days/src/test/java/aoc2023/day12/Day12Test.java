@@ -32,7 +32,7 @@ class Day12Test {
     @Disabled("part1 - not implemented")
     void test2() {
         var data = IO.getResourceAsList("day12.txt");
-        assertEquals(-1, day12.part1(data));
+        assertEquals(7090, day12.part1(data));
     }
 
     @Test

@@ -4,7 +4,6 @@ import aoc2023.utils.IO;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class Day12 {
 
@@ -116,6 +115,10 @@ public class Day12 {
 
     record Row(String condition, List<Integer> lengths) {
 
+        Row {
+            condition = condition.replaceFirst("^\\.+", "");
+        }
+
         static Row parse(String line) {
             String[] parts = line.split(" ");
             String condition = parts[0];
@@ -125,13 +128,22 @@ public class Day12 {
             return new Row(condition, lengths);
         }
 
+        boolean isEmpty() {
+            return condition.isEmpty() && lengths.isEmpty();
+        }
+
+        boolean hasFirstBlock() {
+            return condition.matches("#+\\.");
+        }
+
         boolean isFinal() {
             return condition.chars().allMatch(c -> c == '.' || c == '#');
         }
 
         boolean isOK() {
             assert isFinal();
-            var groups = Arrays.stream(condition.split("\\.+")).filter(s -> !s.isEmpty()).map(String::length).toList();
+            var groups =
+                    Arrays.stream(condition.split("\\.+")).filter(s -> !s.isEmpty()).map(String::length).toList();
             return groups.equals(lengths);
         }
 
@@ -147,12 +159,22 @@ public class Day12 {
             // brute force !!
             if (isFinal()) {
                 return isOK() ? 1 : 0;
+            } else if (hasFirstBlock()) {
+                var p = condition.indexOf('.');
+                if (p != lengths.getFirst()) {
+                    return 0;
+                } else {
+                    var suffix = condition.substring(p).replaceFirst("^\\.+", "");
+                    var rest = lengths.subList(1, lengths.size());
+                    return new Row(suffix, rest).countArrangements();
+                }
             } else {
                 Split split = split();
                 return split.left().countArrangements() + split.right().countArrangements();
             }
         }
     }
+
 
     int part1(List<String> data) {
         return data.stream()
