@@ -136,36 +136,48 @@ public class Day12 {
 
         int countArrangements() {
             var normalizedConditions = normalizeConditions(condition);
-            var normalizedLengths = normalizeLengths(lengths);
+            //var normalizedLengths = normalizeLengths(lengths);
             var maxBrokenPrefix = maxBrokenPrefix(normalizedConditions);
             System.out.println("------------------------------------------");
             System.out.println("condition = " + condition);
             System.out.println("lengths = " + lengths);
             System.out.println("normalizedConditions = " + normalizedConditions);
-            System.out.println("normalizedLengths = " + normalizedLengths);
+            System.out.println("normalizedLengths = " + lengths);
             System.out.println("maxBrokenPrefix = " + maxBrokenPrefix);
             if (normalizedConditions.isEmpty()) {
                 System.out.println("normalized conditions are empty");
-                int result = normalizedLengths.isEmpty() ? 1 : 0;
+                int result = lengths.isEmpty() ? 1 : 0;
                 System.out.println("result = " + result);
                 return result;
-            } else if (normalizedLengths.isEmpty()) {
+            } else if (lengths.isEmpty()) {
                 System.out.println("normalized lengths are empty (but no normalized Conditions so 0)");
                 return 0;
             } else if (maxBrokenPrefix > 0) {
-                if (maxBrokenPrefix > normalizedLengths.getFirst()) {
+                if (maxBrokenPrefix > lengths.getFirst()) {
                     System.out.println("return 0 because prefix is longer that first block");
                     return 0;
-                } else {
-                    var suffixConditions
-                            = maxBrokenPrefix < normalizedConditions.length()
-                            ? normalizedConditions.substring(maxBrokenPrefix)
-                            : "";
+                } else if (maxBrokenPrefix == lengths.getFirst()) {
+                    System.out.println("the length of the prefix is the same as the one in the list");
+                    var suffixConditions = normalizedConditions.substring(maxBrokenPrefix);
                     System.out.println("suffixConditions = " + suffixConditions);
-                    var newLengths = new ArrayList<>(normalizedLengths);
-                    newLengths.set(0, normalizedLengths.getFirst() - maxBrokenPrefix);
+                    var newLengths = lengths.subList(1, lengths.size());
                     System.out.println("newLengths = " + newLengths);
                     System.out.println("we call recursivelly (one call)");
+                    //  If the next character is ?, it must be converted into a '.'
+                    if (!suffixConditions.isEmpty())
+                        suffixConditions = "." + suffixConditions.substring(1);
+                    return new Row(suffixConditions, newLengths).countArrangements();
+                } else {
+                    System.out.println("the length of the prefix is smaller than the first one in  the list");
+                    var suffixConditions = normalizedConditions.substring(maxBrokenPrefix);
+                    System.out.println("suffixConditions = " + suffixConditions);
+                    var newLengths = new ArrayList<>(lengths);
+                    newLengths.set(0, lengths.getFirst() - maxBrokenPrefix);
+                    System.out.println("newLengths = " + newLengths);
+                    System.out.println("we call recursivelly (one call)");
+                    //  If the next character is ?, it must be converted into a '.'
+                    if (!suffixConditions.isEmpty())
+                        suffixConditions = "." + suffixConditions.substring(1);
                     return new Row(suffixConditions, newLengths).countArrangements();
                 }
             } else {
@@ -176,15 +188,9 @@ public class Day12 {
                 System.out.println("left = " + left);
                 System.out.println("right = " + right);
                 System.out.println("we call recursivelly (two calls)");
-                return new Row(left, normalizedLengths).countArrangements()
-                        + new Row(right, normalizedLengths).countArrangements();
+                return new Row(left, lengths).countArrangements()
+                        + new Row(right, lengths).countArrangements();
             }
-        }
-
-        private static List<Integer> normalizeLengths(List<Integer> lengths) {
-            return lengths.stream()
-                    .dropWhile(n -> n == 0)
-                    .toList();
         }
 
         private static String normalizeConditions(String condition) {
