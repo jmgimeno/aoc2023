@@ -112,15 +112,7 @@ public class Day12 {
     Your puzzle answer was 7090.
     */
 
-    record Split(Row left, Row right) {
-
-    }
-
     record Row(String condition, List<Integer> lengths) {
-
-        Row {
-            condition = condition.replaceFirst("^\\.+", "");
-        }
 
         static Row parse(String line) {
             String[] parts = line.split(" ");
@@ -132,15 +124,58 @@ public class Day12 {
         }
 
         boolean isEmpty() {
-            return condition.isEmpty() && lengths.isEmpty();
+            return condition.chars().allMatch(c -> c == '.');
         }
 
-        boolean hasFirstBlock() {
-            return condition.matches("#+\\.");
+        boolean allBroken() {
+            int i = 0;
+            while (i < condition.length() && condition.charAt(i) == '.') i++;
+            int broken = 0;
+            while (i < condition.length() && condition.charAt(i) == '#') {
+                i++;
+                broken++;
+            }
+            if (broken == 0) {
+                return false;
+            } else {
+                return i == condition.length() || condition.charAt(i) != '?';
+            }
         }
 
         boolean firstIsBroken() {
-            return condition.matches("#+[^#]");
+            return false;
+//            int i = 0;
+//            while (i < condition.length() && condition.charAt(i) == '.') i++;
+//            return i < condition.length() && condition.charAt(i) == '#';
+        }
+
+        boolean allUnknown() {
+            int i = 0;
+            while (i < condition.length() && condition.charAt(i) == '.') i++;
+            int unknown = 0;
+            while (i < condition.length() && condition.charAt(i) == '?') {
+                i++;
+                unknown++;
+            }
+            if (unknown == 0) {
+                return false;
+            } else {
+                return i == condition.length() || condition.charAt(i) != '#';
+            }
+        }
+
+        boolean oneUnknownFollowedByBroken() {
+            int i = 0;
+            while (i < condition.length() && condition.charAt(i) == '.') i++;
+            if (i == condition.length()) return false;
+            if (condition.charAt(i) != '?') return false;
+            i++;
+            int broken = 0;
+            while (i < condition.length() && condition.charAt(i) == 'B') {
+                i++;
+                broken++;
+            }
+            return broken > 0 && (i == condition.length() || condition.charAt(i) == '.');
         }
 
         boolean isFinal() {
@@ -154,49 +189,40 @@ public class Day12 {
             return groups.equals(lengths);
         }
 
-        Split split() {
-            assert !isFinal();
-            var p = condition.indexOf('?');
-            var left = condition.substring(0, p) + "." + condition.substring(p + 1);
-            var right = condition.substring(0, p) + "#" + condition.substring(p + 1);
-            return new Split(new Row(left, lengths), new Row(right, lengths));
-        }
-
         int countArrangements() {
-            // brute force !!
-            if (isFinal()) {
-                return isOK() ? 1 : 0;
-            } else if (hasFirstBlock()) {
-                var p = condition.indexOf('.');
-                if (p != lengths.getFirst()) {
+            if (isEmpty()) {
+                return lengths.isEmpty() ? 1 : 0;
+            } else if (allBroken()) {
+                // ....###.
+                var block = condition.replaceFirst("^\\.+", "");
+                var p = block.indexOf('.');
+                p = p == -1 ? block.length() : p;
+                if (lengths.isEmpty() ||  p != lengths.getFirst()) {
                     return 0;
                 } else {
-                    var suffix = condition.substring(p).replaceFirst("^\\.+", "");
+                    var suffix = block.substring(p).replaceFirst("^\\.+", "");
                     var rest = lengths.subList(1, lengths.size());
                     return new Row(suffix, rest).countArrangements();
                 }
-            } else if (firstIsBroken()) {
-                var p = condition.indexOf('?');
-                if (p < lengths.getFirst()) {
-                    // if we have less # than what is needed => the next ? must be a # and this
-                    // is all the options we have
-                    var newCondition = condition.substring(p + 1).replaceFirst("^\\.+", "");
-                    var newLengths = new ArrayList<>(lengths.subList(1, lengths.size()));
-                    newLengths.addFirst(lengths.getFirst() - p - 1);
-                    return new Row(newCondition, newLengths).countArrangements();
-                } else if (p > lengths.getFirst()) {
-                    // this is impossible !!
-                    return 0;
+            } else if (oneUnknownFollowedByBroken()) {
+                // ?#####...
+                var block = condition.replaceFirst("^\\.+", "");
+                var p = block.indexOf('.');
+                if (p == lengths.getFirst()) {
+                    // we must make ? a # and we need to continue
+                    return new Row(block.substring(p + 1), lengths.subList(1, lengths.size())).countArrangements();
+                } else if (p == lengths.getFirst() - 1) {
+                    // we must make ? a . and we need to continue
+                    return new Row(block.substring(p + 1), lengths.subList(1, lengths.size())).countArrangements();
                 } else {
-                    // if we have the exact number, the next ? must be a . and we need to proceed
-                    // with the rest
-                    var suffix = condition.substring(p + 1).replaceFirst("^\\.+", "");
-                    var rest = lengths.subList(1, lengths.size());
-                    return new Row(suffix, rest).countArrangements();
+                    return 0;
                 }
             } else {
-                Split split = split();
-                return split.left().countArrangements() + split.right().countArrangements();
+                var p = condition.indexOf('?');
+                String suffix = condition.substring(p + 1);
+                var left = condition.substring(0, p) + "." + suffix;
+                var right = condition.substring(0, p) + "#" + suffix;
+                return new Row(left, lengths).countArrangements() + new Row(right, lengths).countArrangements();
             }
         }
     }
