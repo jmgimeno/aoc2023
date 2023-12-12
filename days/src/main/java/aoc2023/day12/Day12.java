@@ -2,8 +2,11 @@ package aoc2023.day12;
 
 import aoc2023.utils.IO;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Day12 {
 
@@ -122,6 +125,15 @@ public class Day12 {
             return new Row(condition, lengths);
         }
 
+        Row unfold(int copies) {
+            var newCondition =
+                    IntStream.range(0, copies).boxed().map(i -> condition).collect(Collectors.joining("?"));
+            var newLengths = new ArrayList<Integer>();
+            for (int i = 0; i < copies; i++)
+                newLengths.addAll(lengths);
+            return new Row(newCondition, newLengths);
+        }
+
         boolean isEmpty() {
             return condition.chars().allMatch(c -> c == '.');
         }
@@ -139,13 +151,6 @@ public class Day12 {
             } else {
                 return i == condition.length() || condition.charAt(i) != '?';
             }
-        }
-
-        boolean firstIsBroken() {
-            return false;
-//            int i = 0;
-//            while (i < condition.length() && condition.charAt(i) == '.') i++;
-//            return i < condition.length() && condition.charAt(i) == '#';
         }
 
         boolean allUnknown() {
@@ -189,7 +194,7 @@ public class Day12 {
                 var block = condition.replaceFirst("^\\.+", "");
                 var p = block.indexOf('.');
                 p = p == -1 ? block.length() : p;
-                if (lengths.isEmpty() ||  p != lengths.getFirst()) {
+                if (lengths.isEmpty() || p != lengths.getFirst()) {
                     return 0;
                 } else {
                     var suffix = block.substring(p).replaceFirst("^\\.+", "");
@@ -262,7 +267,11 @@ public class Day12 {
      */
 
     int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+        return data.stream()
+                .map(Row::parse)
+                .map(r -> r.unfold(5))
+                .mapToInt(Row::countArrangements)
+                .sum();
     }
 
     public static void main(String[] args) {
@@ -270,7 +279,7 @@ public class Day12 {
         var data = IO.getResourceAsList("day12.txt");
         var part1 = day12.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day12.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day12.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }

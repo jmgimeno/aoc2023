@@ -39,10 +39,9 @@ class Day12Test {
 
     @Test
     @DisplayName("part2 - example data")
-    @Disabled("part2 - not implemented")
     void test3() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(-1, day12.part2(data));
+        assertEquals(525152, day12.part2(data));
     }
 
     @Test
