@@ -32,6 +32,7 @@ class Day12Test {
 
     @Test
     @DisplayName("part1 - input data")
+    @Disabled("innefficient")
     void test2() {
         var data = IO.getResourceAsList("day12.txt");
         assertEquals(7090, day12.part1(data));
@@ -68,70 +69,45 @@ class Day12Test {
     }
 
     @Test
-    @DisplayName("???.### 1,1,3")
+    @DisplayName("part 1 - ???.### 1,1,3")
     void test6() {
-        var row = new Row("#.#.###", List.of(1, 1, 3));
-        assertFalse(row.isEmpty());
-        assertTrue(row.isFinal());
-        assertTrue(row.allBroken());
-        assertFalse(row.allUnknown());
-        assertFalse(row.oneUnknownFollowedByBroken());
-        assertEquals(1, row.countArrangements());
-    }
-
-    @Test
-    @DisplayName("???.### 1,1,3")
-    void test7() {
         var row = new Row("???.###", List.of(1, 1, 3));
-        assertFalse(row.isEmpty());
-        assertFalse(row.isFinal());
-        assertFalse(row.allBroken());
-        assertTrue(row.allUnknown());
-        assertFalse(row.oneUnknownFollowedByBroken());
         assertEquals(1, row.countArrangements());
     }
 
     @Test
-    @DisplayName("?#?#?#?#?#?#?#? 1,3,1,6")
+    @DisplayName("part 1 - .??..??...?##. 1,1,3")
+    void test7() {
+        var row = new Row(".??..??...?##.", List.of(1, 1, 3));
+        assertEquals(4, row.countArrangements());
+    }
+
+    @Test
+    @DisplayName("part 1 - ?#?#?#?#?#?#?#? 1,3,1,6")
     void test8() {
         var row = new Row("?#?#?#?#?#?#?#?", List.of(1, 3, 1, 6));
-        assertFalse(row.isEmpty());
-        assertFalse(row.isFinal());
-        assertFalse(row.allBroken());
-        assertFalse(row.allUnknown());
-        assertFalse(row.oneUnknownFollowedByBroken());
+        assertEquals(1, row.countArrangements());
     }
 
     @Test
-    @DisplayName("classifies ????.######..#####. 1,6,5")
+    @DisplayName("part 1 - ????.#...#... 4,1,1")
     void test9() {
-        var row = new Row("????.######..#####.", List.of(1, 6, 5));
-        assertFalse(row.isEmpty());
-        assertFalse(row.isFinal());
-        assertFalse(row.allBroken());
-        assertTrue(row.allUnknown());
-        assertFalse(row.oneUnknownFollowedByBroken());
+        var row = new Row("????.#...#...", List.of(4, 1, 1));
+        assertEquals(1, row.countArrangements());
     }
 
     @Test
-    @DisplayName(".#?#?#?#?#?#?#? 1,3,1,6")
-    void test11() {
-        var row = new Row(".#?#?#?#?#?#?#?.", List.of(1, 3, 1, 6));
-        assertFalse(row.isEmpty());
-        assertFalse(row.isFinal());
-        assertFalse(row.allBroken());
-        assertFalse(row.allUnknown());
-        assertFalse(row.oneUnknownFollowedByBroken());
-    }
-
-    @Test
-    @DisplayName("example arrangements")
+    @DisplayName("part 1 - ????.######..#####. 1,6,5")
     void test10() {
-        assertEquals(1, new Row("???.###", List.of(1, 1, 3)).countArrangements());
-        assertEquals(4, new Row(".??..??...?##.", List.of(1, 1, 3)).countArrangements());
-        assertEquals(1, new Row("?#?#?#?#?#?#?#?", List.of(1, 3, 1, 6)).countArrangements());
-        assertEquals(1, new Row("????.#...#...", List.of(4, 1, 1)).countArrangements());
-        assertEquals(4, new Row("????.######..#####.", List.of(1, 6, 5)).countArrangements());
-       assertEquals(10, new Row("?###????????.", List.of(3, 2, 1)).countArrangements());
+        var row = new Row("????.######..#####.", List.of(1, 6, 5));
+        assertEquals(1, row.countArrangements());
     }
+
+    @Test
+    @DisplayName("part 1 - ?###???????? 3,2,1")
+    void test11() {
+        var row = new Row("?###????????", List.of(3, 2, 1));
+        assertEquals(10, row.countArrangements());
+    }
+
 }

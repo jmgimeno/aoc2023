@@ -134,58 +134,6 @@ public class Day12 {
             return new Row(newCondition, newLengths);
         }
 
-        boolean isEmpty() {
-            return condition.chars().allMatch(c -> c == '.');
-        }
-
-        boolean allBroken() {
-            int i = 0;
-            while (i < condition.length() && condition.charAt(i) == '.') i++;
-            int broken = 0;
-            while (i < condition.length() && condition.charAt(i) == '#') {
-                i++;
-                broken++;
-            }
-            if (broken == 0) {
-                return false;
-            } else {
-                return i == condition.length() || condition.charAt(i) != '?';
-            }
-        }
-
-        boolean allUnknown() {
-            int i = 0;
-            while (i < condition.length() && condition.charAt(i) == '.') i++;
-            int unknown = 0;
-            while (i < condition.length() && condition.charAt(i) == '?') {
-                i++;
-                unknown++;
-            }
-            if (unknown == 0) {
-                return false;
-            } else {
-                return i == condition.length() || condition.charAt(i) != '#';
-            }
-        }
-
-        boolean oneUnknownFollowedByBroken() {
-            int i = 0;
-            while (i < condition.length() && condition.charAt(i) == '.') i++;
-            if (i == condition.length()) return false;
-            if (condition.charAt(i) != '?') return false;
-            i++;
-            int broken = 0;
-            while (i < condition.length() && condition.charAt(i) == 'B') {
-                i++;
-                broken++;
-            }
-            return broken > 0 && (i == condition.length() || condition.charAt(i) == '.');
-        }
-
-        boolean isFinal() {
-            return condition.chars().allMatch(c -> c == '.' || c == '#');
-        }
-
         int countArrangements() {
             var normalizedConditions = normalizeConditions(condition);
             var normalizedLengths = normalizeLengths(lengths);
@@ -220,19 +168,6 @@ public class Day12 {
                     System.out.println("we call recursivelly (one call)");
                     return new Row(suffixConditions, newLengths).countArrangements();
                 }
-//                }
-//            } else if (oneUnknownFollowedByBroken()) {
-//                // ?#####...
-//                var p = normalizedConditions.indexOf('.');
-//                if (p == normalizedLengths.getFirst()) {
-//                    // we must make ? a # and we need to continue
-//                    return new Row(normalizedConditions.substring(p + 1), normalizedLengths.subList(1, normalizedLengths.size())).countArrangements();
-//                } else if (p == normalizedLengths.getFirst() - 1) {
-//                    // we must make ? a . and we need to continue
-//                    return new Row(normalizedConditions.substring(p + 1), normalizedLengths.subList(1, normalizedLengths.size())).countArrangements();
-//                } else {
-//                    return 0;
-//                }
             } else {
                 assert normalizedConditions.charAt(0) == '?';
                 String suffix = normalizedConditions.substring(1);
