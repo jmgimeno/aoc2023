@@ -29,7 +29,6 @@ class Day12Test {
 
     @Test
     @DisplayName("part1 - input data")
-    @Disabled("part1 - not implemented")
     void test2() {
         var data = IO.getResourceAsList("day12.txt");
         assertEquals(7090, day12.part1(data));

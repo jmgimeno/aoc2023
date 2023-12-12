@@ -2,6 +2,7 @@ package aoc2023.day12;
 
 import aoc2023.utils.IO;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -107,6 +108,8 @@ public class Day12 {
 
     For each row, count all of the different arrangements of operational and broken springs that
     meet the given criteria. What is the sum of those counts?
+
+    Your puzzle answer was 7090.
     */
 
     record Split(Row left, Row right) {
@@ -134,6 +137,10 @@ public class Day12 {
 
         boolean hasFirstBlock() {
             return condition.matches("#+\\.");
+        }
+
+        boolean firstIsBroken() {
+            return condition.matches("#+[^#]");
         }
 
         boolean isFinal() {
@@ -168,6 +175,25 @@ public class Day12 {
                     var rest = lengths.subList(1, lengths.size());
                     return new Row(suffix, rest).countArrangements();
                 }
+            } else if (firstIsBroken()) {
+                var p = condition.indexOf('?');
+                if (p < lengths.getFirst()) {
+                    // if we have less # than what is needed => the next ? must be a # and this
+                    // is all the options we have
+                    var newCondition = condition.substring(p + 1).replaceFirst("^\\.+", "");
+                    var newLengths = new ArrayList<>(lengths.subList(1, lengths.size()));
+                    newLengths.addFirst(lengths.getFirst() - p - 1);
+                    return new Row(newCondition, newLengths).countArrangements();
+                } else if (p > lengths.getFirst()) {
+                    // this is impossible !!
+                    return 0;
+                } else {
+                    // if we have the exact number, the next ? must be a . and we need to proceed
+                    // with the rest
+                    var suffix = condition.substring(p + 1).replaceFirst("^\\.+", "");
+                    var rest = lengths.subList(1, lengths.size());
+                    return new Row(suffix, rest).countArrangements();
+                }
             } else {
                 Split split = split();
                 return split.left().countArrangements() + split.right().countArrangements();
@@ -184,7 +210,37 @@ public class Day12 {
     }
 
     /*
+    --- Part Two ---
+    As you look out at the field of springs, you feel like there are way more springs than the
+    condition records list. When you examine the records, you discover that they were actually
+    folded up this whole time!
 
+    To unfold the records, on each row, replace the list of spring conditions with five copies of
+     itself (separated by ?) and replace the list of contiguous groups of damaged springs with
+     five copies of itself (separated by ,).
+
+    So, this row:
+
+    .# 1
+    Would become:
+
+    .#?.#?.#?.#?.# 1,1,1,1,1
+    The first line of the above example would become:
+
+    ???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3
+
+    In the above example, after unfolding, the number of possible arrangements for some rows is
+    now much larger:
+
+    ???.### 1,1,3 - 1 arrangement
+    .??..??...?##. 1,1,3 - 16384 arrangements
+    ?#?#?#?#?#?#?#? 1,3,1,6 - 1 arrangement
+    ????.#...#... 4,1,1 - 16 arrangements
+    ????.######..#####. 1,6,5 - 2500 arrangements
+    ?###???????? 3,2,1 - 506250 arrangements
+    After unfolding, adding all of the possible arrangement counts together produces 525152.
+
+    Unfold your condition records; what is the new sum of possible arrangement counts?
      */
 
     int part2(List<String> data) {
