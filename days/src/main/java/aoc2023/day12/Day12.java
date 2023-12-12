@@ -187,40 +187,62 @@ public class Day12 {
         }
 
         int countArrangements() {
-            if (isEmpty()) {
-                return lengths.isEmpty() ? 1 : 0;
-            } else if (allBroken()) {
-                // ....###.
-                var block = condition.replaceFirst("^\\.+", "");
-                var p = block.indexOf('.');
-                p = p == -1 ? block.length() : p;
-                if (lengths.isEmpty() || p != lengths.getFirst()) {
+            var normalizedConditions = normalizeConditions(condition);
+            var normalizedLengths = normalizeLengths(lengths);
+            var maxBrokenPrefix = maxBrokenPrefix(normalizedConditions);
+            if (normalizedConditions.isEmpty()) {
+                return normalizedLengths.isEmpty() ? 1 : 0;
+            } else if (normalizedLengths.isEmpty()) {
+                return 0;
+            } else if (maxBrokenPrefix > 0) {
+                if (maxBrokenPrefix > normalizedLengths.getFirst()) {
                     return 0;
                 } else {
-                    var suffix = block.substring(p).replaceFirst("^\\.+", "");
-                    var rest = lengths.subList(1, lengths.size());
-                    return new Row(suffix, rest).countArrangements();
+                    var suffixConditions
+                            = maxBrokenPrefix != normalizedConditions.length()
+                            ? normalizedConditions.substring(maxBrokenPrefix + 1)
+                            : "";
+                    var newLengths = new ArrayList<>(normalizedLengths);
+                    newLengths.set(0, normalizedLengths.getFirst() - maxBrokenPrefix);
+                    return new Row(suffixConditions, newLengths).countArrangements();
                 }
-            } else if (oneUnknownFollowedByBroken()) {
-                // ?#####...
-                var block = condition.replaceFirst("^\\.+", "");
-                var p = block.indexOf('.');
-                if (p == lengths.getFirst()) {
-                    // we must make ? a # and we need to continue
-                    return new Row(block.substring(p + 1), lengths.subList(1, lengths.size())).countArrangements();
-                } else if (p == lengths.getFirst() - 1) {
-                    // we must make ? a . and we need to continue
-                    return new Row(block.substring(p + 1), lengths.subList(1, lengths.size())).countArrangements();
-                } else {
-                    return 0;
-                }
+//                }
+//            } else if (oneUnknownFollowedByBroken()) {
+//                // ?#####...
+//                var p = normalizedConditions.indexOf('.');
+//                if (p == normalizedLengths.getFirst()) {
+//                    // we must make ? a # and we need to continue
+//                    return new Row(normalizedConditions.substring(p + 1), normalizedLengths.subList(1, normalizedLengths.size())).countArrangements();
+//                } else if (p == normalizedLengths.getFirst() - 1) {
+//                    // we must make ? a . and we need to continue
+//                    return new Row(normalizedConditions.substring(p + 1), normalizedLengths.subList(1, normalizedLengths.size())).countArrangements();
+//                } else {
+//                    return 0;
+//                }
             } else {
-                var p = condition.indexOf('?');
-                String suffix = condition.substring(p + 1);
-                var left = condition.substring(0, p) + "." + suffix;
-                var right = condition.substring(0, p) + "#" + suffix;
-                return new Row(left, lengths).countArrangements() + new Row(right, lengths).countArrangements();
+                String suffix = condition.substring(1);
+                var left = suffix;
+                var right = "#" + suffix;
+                return new Row(left, normalizedLengths).countArrangements()
+                        + new Row(right, normalizedLengths).countArrangements();
             }
+        }
+
+        private static List<Integer> normalizeLengths(List<Integer> lengths) {
+            return lengths.stream()
+                    .dropWhile(n -> n == 0)
+                    .toList();
+        }
+
+        private static String normalizeConditions(String condition) {
+            return condition.replaceFirst("^\\.+", "");
+        }
+
+        private static int maxBrokenPrefix(String condition) {
+            int broken = 0;
+            while (broken < condition.length() && condition.charAt(broken) == '#')
+                broken++;
+            return broken;
         }
     }
 
