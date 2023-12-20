@@ -2,11 +2,10 @@ package aoc2023.day12;
 
 import aoc2023.utils.IO;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
 
 public class Day12 {
 
@@ -114,6 +113,10 @@ public class Day12 {
     Your puzzle answer was 7090.
     */
 
+    record Split(Row left, Row right) {
+
+    }
+
     record Row(String condition, List<Integer> lengths) {
 
         static Row parse(String line) {
@@ -134,90 +137,96 @@ public class Day12 {
             return new Row(newCondition, newLengths);
         }
 
+        boolean isFinal() {
+            return condition.chars().allMatch(c -> c == '.' || c == '#');
+        }
+
+        boolean isOK() {
+            assert isFinal();
+            var groups =
+                    Arrays.stream(condition.split("\\.+")).filter(s -> !s.isEmpty()).map(String::length).toList();
+            return groups.equals(lengths);
+        }
+
+        Split split() {
+            assert !isFinal();
+            var p = condition.indexOf('?');
+            var left = condition.substring(0, p) + "." + condition.substring(p + 1);
+            var right = condition.substring(0, p) + "#" + condition.substring(p + 1);
+            return new Split(new Row(left, lengths), new Row(right, lengths));
+        }
+
         int countArrangements() {
-            var normalizedConditions = normalizeConditions(condition);
-            //var normalizedLengths = normalizeLengths(lengths);
-            var maxBrokenPrefix = maxBrokenPrefix(normalizedConditions);
-            System.out.println("------------------------------------------");
-            System.out.println("condition = " + condition);
-            System.out.println("lengths = " + lengths);
-            System.out.println("normalizedConditions = " + normalizedConditions);
-            System.out.println("normalizedLengths = " + lengths);
-            System.out.println("maxBrokenPrefix = " + maxBrokenPrefix);
-            if (normalizedConditions.isEmpty()) {
-                System.out.println("normalized conditions are empty");
-                int result = lengths.isEmpty() ? 1 : 0;
-                System.out.println("result = " + result);
-                return result;
-            } else if (lengths.isEmpty()) {
-                System.out.println("normalized lengths are empty (but no normalized Conditions so" +
-                        " 0)");
-                return 0;
-            } else if (maxBrokenPrefix > 0) {
-                if (maxBrokenPrefix > lengths.getFirst()) {
-                    System.out.println("return 0 because prefix is longer that first block");
-                    return 0;
-                } else if (maxBrokenPrefix == lengths.getFirst()) {
-                    System.out.println("the length of the prefix is the same as the one in the " +
-                            "list");
-                    var suffixConditions = normalizedConditions.substring(maxBrokenPrefix);
-                    System.out.println("suffixConditions = " + suffixConditions);
-                    var newLengths = lengths.subList(1, lengths.size());
-                    System.out.println("newLengths = " + newLengths);
-                    System.out.println("we call recursivelly (one call)");
-                    //  If the next character is ?, it must be converted into a '.'
-                    if (!suffixConditions.isEmpty())
-                        suffixConditions = "." + suffixConditions.substring(1);
-                    return new Row(suffixConditions, newLengths).countArrangements();
-                } else {
-                    System.out.println("the length of the prefix is smaller than the first one in" +
-                            "  the list");
-                    var suffixConditions = normalizedConditions.substring(maxBrokenPrefix);
-                    System.out.println("suffixConditions = " + suffixConditions);
-                    var newLengths = new ArrayList<>(lengths);
-                    newLengths.set(0, lengths.getFirst() - maxBrokenPrefix);
-                    System.out.println("newLengths = " + newLengths);
-                    System.out.println("we call recursivelly (one call)");
-                    //  If the next character is ?, it must be converted into a '.'
-                    if (!suffixConditions.isEmpty()) {
-                        if (suffixConditions.charAt(0) == '.') {
-                            return 0;
-                        } else {
-                            suffixConditions = "#" + suffixConditions.substring(1);
-                        }
-                    }
-                    return new Row(suffixConditions, newLengths).countArrangements();
-                }
+            // brute force !!
+            if (isFinal()) {
+                return isOK() ? 1 : 0;
             } else {
-                assert normalizedConditions.charAt(0) == '?';
-                String suffix = normalizedConditions.substring(1);
-                var left = "." + suffix;
-                var right = "#" + suffix;
-                System.out.println("left = " + left);
-                System.out.println("right = " + right);
-                System.out.println("we call recursivelly (two calls)");
-                return new Row(left, lengths).countArrangements()
-                        + new Row(right, lengths).countArrangements();
+                Split split = split();
+                return split.left().countArrangements() + split.right().countArrangements();
             }
-        }
-
-        private static String normalizeConditions(String condition) {
-            return condition.replaceFirst("^\\.+", "");
-        }
-
-        private static int maxBrokenPrefix(String condition) {
-            int broken = 0;
-            while (broken < condition.length() && condition.charAt(broken) == '#')
-                broken++;
-            return broken;
         }
     }
 
+    static int countArrangements(String conditions, List<Integer> lengths) {
+        if (conditions.isEmpty())
+            return lengths.isEmpty() ? 1 : 0;
+        if (lengths.isEmpty())
+            return conditions.chars().noneMatch(c -> c == '#') ? 1 : 0;
+        var knownBlocks = conditions.chars().filter(c -> c == '#').count();
+        var unknowns = conditions.chars().filter(c -> c == '?').count();
+        var totalLength = lengths.stream().mapToInt(l -> l).sum();
+        if (knownBlocks > totalLength)
+            return 0;
+        if (knownBlocks + unknowns < totalLength)
+            return 0;
+        char c = conditions.charAt(0);
+        switch (c) {
+            case '.' -> {
+                return countArrangements(conditions.substring(1), lengths);
+            }
+            case '#' -> {
+                if (lengths.isEmpty()) return 0;
+                var f = lengths.get(0);
+                if (f > 1) {
+                    if (conditions.length() > 1) {
+                        var cc = conditions.charAt(1);
+                        if (cc == '#' || cc == '?') {
+                            var ll = new ArrayList<>(lengths);
+                            ll.set(0, f - 1);
+                            return countArrangements("#" + conditions.substring(2), ll);
+                        } else {
+                            return 0;
+                        }
+                    } else {
+                        return 0;
+                    }
+                } else if (f == 1) {
+                    if (conditions.length() > 1) {
+                        var cc = conditions.charAt(1);
+                        if (cc == '.' || cc == '?')
+                            return countArrangements(conditions.substring(2), lengths.subList(1,
+                                    lengths.size()));
+                        else return 0;
+                    } else {
+                        return countArrangements("", lengths.subList(1, lengths.size()));
+                    }
+                } else {
+                    return 0;
+                }
+            }
+            case '?' -> {
+                var cond = conditions.substring(1);
+                return countArrangements(cond, lengths) + countArrangements("#" + cond,
+                        lengths);
+            }
+            default -> throw new IllegalStateException("impossible");
+        }
+    }
 
     int part1(List<String> data) {
         return data.stream()
                 .map(Row::parse)
-                .mapToInt(Row::countArrangements)
+                .mapToInt(r -> countArrangements(r.condition(), r.lengths()))
                 .sum();
     }
 
@@ -240,7 +249,6 @@ public class Day12 {
     The first line of the above example would become:
 
     ???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3
-
     In the above example, after unfolding, the number of possible arrangements for some rows is
     now much larger:
 
@@ -251,15 +259,13 @@ public class Day12 {
     ????.######..#####. 1,6,5 - 2500 arrangements
     ?###???????? 3,2,1 - 506250 arrangements
     After unfolding, adding all of the possible arrangement counts together produces 525152.
-
-    Unfold your condition records; what is the new sum of possible arrangement counts?
      */
 
     int part2(List<String> data) {
         return data.stream()
                 .map(Row::parse)
                 .map(r -> r.unfold(5))
-                .mapToInt(Row::countArrangements)
+                .mapToInt(r -> countArrangements(r.condition(), r.lengths()))
                 .sum();
     }
 
