@@ -28,7 +28,7 @@
 - Day 18: Lavaduct Lagoon
 - Day 19: Aplenty
 - Day 20: Pulse Propagation
-- Day 21: 
+- Day 21: Step Counter
 - Day 22: 
 - Day 23: 
 - Day 24: 
