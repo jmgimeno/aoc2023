@@ -1,6 +1,7 @@
 package aoc2023.day12;
 
 import aoc2023.utils.IO;
+import com.google.common.io.LittleEndianDataInputStream;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -121,7 +122,7 @@ public class Day12 {
 
         static Row parse(String line) {
             String[] parts = line.split(" ");
-            String condition = parts[0];
+            String condition = parts[0] + "$"; // We add a marker
             List<Integer> lengths = Arrays.stream(parts[1].split(","))
                     .map(Integer::parseInt)
                     .toList();
@@ -130,103 +131,54 @@ public class Day12 {
 
         Row unfold(int copies) {
             var newCondition =
-                    IntStream.range(0, copies).boxed().map(i -> condition).collect(Collectors.joining("?"));
+                    IntStream.range(0, copies).boxed().map(i -> condition.substring(0, condition.length() - 1)).collect(Collectors.joining("?")) + "$";
             var newLengths = new ArrayList<Integer>();
             for (int i = 0; i < copies; i++)
                 newLengths.addAll(lengths);
             return new Row(newCondition, newLengths);
         }
 
-        boolean isFinal() {
-            return condition.chars().allMatch(c -> c == '.' || c == '#');
-        }
-
-        boolean isOK() {
-            assert isFinal();
-            var groups =
-                    Arrays.stream(condition.split("\\.+")).filter(s -> !s.isEmpty()).map(String::length).toList();
-            return groups.equals(lengths);
-        }
-
-        Split split() {
-            assert !isFinal();
-            var p = condition.indexOf('?');
-            var left = condition.substring(0, p) + "." + condition.substring(p + 1);
-            var right = condition.substring(0, p) + "#" + condition.substring(p + 1);
-            return new Split(new Row(left, lengths), new Row(right, lengths));
-        }
-
         int countArrangements() {
-            // brute force !!
-            if (isFinal()) {
-                return isOK() ? 1 : 0;
-            } else {
-                Split split = split();
-                return split.left().countArrangements() + split.right().countArrangements();
-            }
+            return countArrangements(condition, lengths, 0);
         }
-    }
 
-    static int countArrangements(String conditions, List<Integer> lengths) {
-        if (conditions.isEmpty())
-            return lengths.isEmpty() ? 1 : 0;
-        if (lengths.isEmpty())
-            return conditions.chars().noneMatch(c -> c == '#') ? 1 : 0;
-        var knownBlocks = conditions.chars().filter(c -> c == '#').count();
-        var unknowns = conditions.chars().filter(c -> c == '?').count();
-        var totalLength = lengths.stream().mapToInt(l -> l).sum();
-        if (knownBlocks > totalLength)
-            return 0;
-        if (knownBlocks + unknowns < totalLength)
-            return 0;
-        char c = conditions.charAt(0);
-        switch (c) {
-            case '.' -> {
-                return countArrangements(conditions.substring(1), lengths);
-            }
-            case '#' -> {
-                if (lengths.isEmpty()) return 0;
-                var f = lengths.get(0);
-                if (f > 1) {
-                    if (conditions.length() > 1) {
-                        var cc = conditions.charAt(1);
-                        if (cc == '#' || cc == '?') {
-                            var ll = new ArrayList<>(lengths);
-                            ll.set(0, f - 1);
-                            return countArrangements("#" + conditions.substring(2), ll);
-                        } else {
-                            return 0;
-                        }
+        static int countArrangements(String conditions, List<Integer> lengths, int currentBlock) {
+            // Conditions is never empty
+            char c = conditions.charAt(0);
+            switch (c) {
+                case '$' -> {
+                    if (currentBlock == 0)  {
+                        return lengths.isEmpty() ? 1 : 0;
+                    } else {
+                        return List.of(currentBlock).equals(lengths) ? 1 : 0;
+                    }
+                }
+                case '#' -> {
+                    return countArrangements(conditions.substring(1), lengths, currentBlock +1);
+                }
+                case '.' -> {
+                    if (currentBlock == 0) {
+                        return countArrangements(conditions.substring(1), lengths, currentBlock);
+                    } else if (!lengths.isEmpty() && currentBlock == lengths.getFirst()) {
+                        return countArrangements(conditions.substring(1), lengths.subList(1, lengths.size()), 0);
                     } else {
                         return 0;
                     }
-                } else if (f == 1) {
-                    if (conditions.length() > 1) {
-                        var cc = conditions.charAt(1);
-                        if (cc == '.' || cc == '?')
-                            return countArrangements(conditions.substring(2), lengths.subList(1,
-                                    lengths.size()));
-                        else return 0;
-                    } else {
-                        return countArrangements("", lengths.subList(1, lengths.size()));
-                    }
-                } else {
-                    return 0;
+                }
+                case '?' -> {
+                    return countArrangements(conditions.substring(1), lengths, currentBlock + 1)
+                            + countArrangements("." + conditions.substring(1), lengths, currentBlock);
                 }
             }
-            case '?' -> {
-                var cond = conditions.substring(1);
-                return countArrangements(cond, lengths) + countArrangements("#" + cond,
-                        lengths);
-            }
-            default -> throw new IllegalStateException("impossible");
+            throw new IllegalStateException("cannot happen");
         }
+
     }
 
     int part1(List<String> data) {
         return data.stream()
                 .map(Row::parse)
-                .mapToInt(r -> countArrangements(r.condition(), r.lengths()))
+                .mapToInt(Row::countArrangements)
                 .sum();
     }
 
@@ -265,7 +217,7 @@ public class Day12 {
         return data.stream()
                 .map(Row::parse)
                 .map(r -> r.unfold(5))
-                .mapToInt(r -> countArrangements(r.condition(), r.lengths()))
+                .mapToInt(Row::countArrangements)
                 .sum();
     }
 

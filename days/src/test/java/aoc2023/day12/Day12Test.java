@@ -53,41 +53,41 @@ class Day12Test {
     @DisplayName("part 1 - ???.### 1,1,3")
     void test5() {
         var row = Day12.Row.parse("???.### 1,1,3");
-        assertEquals(1, Day12.countArrangements(row.condition(), row.lengths()));
+        assertEquals(1, row.countArrangements());
     }
 
     @Test
     @DisplayName("part 1 - .??..??...?##. 1,1,3")
     void test6() {
         var row = Day12.Row.parse(".??..??...?##. 1,1,3");
-        assertEquals(4, Day12.countArrangements(row.condition(), row.lengths()));
+        assertEquals(4, row.countArrangements());
     }
 
     @Test
     @DisplayName("part 1 - ?#?#?#?#?#?#?#? 1,3,1,6")
     void test7() {
         var row = Day12.Row.parse("?#?#?#?#?#?#?#? 1,3,1,6");
-        assertEquals(1, Day12.countArrangements(row.condition(), row.lengths()));
+        assertEquals(1, row.countArrangements());
     }
 
     @Test
     @DisplayName("part 1 - ????.#...#... 4,1,1")
     void test8() {
         var row = Day12.Row.parse("????.#...#... 4,1,1");
-        assertEquals(1, Day12.countArrangements(row.condition(), row.lengths()));
+        assertEquals(1, row.countArrangements());
     }
 
     @Test
     @DisplayName("part 1 - ????.######..#####. 1,6,5")
     void test9() {
         var row = Day12.Row.parse("????.######..#####. 1,6,5");
-        assertEquals(4, Day12.countArrangements(row.condition(), row.lengths()));
+        assertEquals(4, row.countArrangements());
     }
 
     @Test
     @DisplayName("part 1 - ?###???????? 3,2,1")
     void test10() {
         var row = Day12.Row.parse("?###???????? 3,2,1");
-        assertEquals(10, Day12.countArrangements(row.condition(), row.lengths()));
+        assertEquals(10, row.countArrangements());
     }
 }
