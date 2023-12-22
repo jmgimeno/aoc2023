@@ -158,19 +158,21 @@ public class Day12 {
                     }
                 }
                 case '#' -> {
-                    if (!lengths.isEmpty() && currentBlock < lengths.getFirst()) {
-                        yield countArrangements(conditions.substring(1), lengths,
-                                currentBlock + 1, memo);
+                    var blocks = count(conditions, '#');
+                    if (!lengths.isEmpty() && currentBlock + blocks <= lengths.getFirst()) {
+                        yield countArrangements(conditions.substring(blocks), lengths,
+                                currentBlock + blocks, memo);
                     } else {
                         yield 0L;
                     }
                 }
                 case '.' -> {
+                    int dots = count(conditions, '.');
                     if (currentBlock == 0) {
-                        yield countArrangements(conditions.substring(1), lengths,
+                        yield countArrangements(conditions.substring(dots), lengths,
                                 currentBlock, memo);
                     } else if (!lengths.isEmpty() && currentBlock == lengths.getFirst()) {
-                        yield countArrangements(conditions.substring(1), lengths.subList(1
+                        yield countArrangements(conditions.substring(dots), lengths.subList(1
                                 , lengths.size()), 0, memo);
                     } else {
                         yield 0L;
@@ -185,6 +187,14 @@ public class Day12 {
             memo.put(key, result);
             return result;
         }
+    }
+
+    static int count(String conditions, char c) {
+        assert conditions.charAt(0) == c;
+        int i = 0;
+        while (conditions.charAt(i) == c)
+            i++;
+        return i;
     }
 
     long part1(List<String> data) {
