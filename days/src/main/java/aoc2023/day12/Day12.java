@@ -1,9 +1,11 @@
 package aoc2023.day12;
 
 import aoc2023.utils.IO;
-import com.google.common.io.LittleEndianDataInputStream;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -114,10 +116,6 @@ public class Day12 {
     Your puzzle answer was 7090.
     */
 
-    record Split(Row left, Row right) {
-
-    }
-
     record Row(String condition, List<Integer> lengths) {
 
         static Row parse(String line) {
@@ -131,54 +129,68 @@ public class Day12 {
 
         Row unfold(int copies) {
             var newCondition =
-                    IntStream.range(0, copies).boxed().map(i -> condition.substring(0, condition.length() - 1)).collect(Collectors.joining("?")) + "$";
+                    IntStream.range(0, copies).boxed().map(i -> condition.substring(0,
+                            condition.length() - 1)).collect(Collectors.joining("?")) + "$";
             var newLengths = new ArrayList<Integer>();
             for (int i = 0; i < copies; i++)
                 newLengths.addAll(lengths);
             return new Row(newCondition, newLengths);
         }
 
-        int countArrangements() {
-            return countArrangements(condition, lengths, 0);
+        long countArrangements() {
+            var memo = new HashMap<String, Long>();
+            return countArrangements(condition, lengths, 0, memo);
         }
 
-        static int countArrangements(String conditions, List<Integer> lengths, int currentBlock) {
+        static long countArrangements(String conditions, List<Integer> lengths, int currentBlock,
+                                      HashMap<String, Long> memo) {
+            var key = conditions + lengths.toString() + currentBlock;
+            if (memo.containsKey(key))
+                return memo.get(key);
             // Conditions is never empty
             char c = conditions.charAt(0);
-            switch (c) {
+            long result = switch (c) {
                 case '$' -> {
-                    if (currentBlock == 0)  {
-                        return lengths.isEmpty() ? 1 : 0;
+                    if (currentBlock == 0) {
+                        yield lengths.isEmpty() ? 1L : 0L;
                     } else {
-                        return List.of(currentBlock).equals(lengths) ? 1 : 0;
+                        yield List.of(currentBlock).equals(lengths) ? 1L : 0L;
                     }
                 }
                 case '#' -> {
-                    return countArrangements(conditions.substring(1), lengths, currentBlock +1);
+                    if (!lengths.isEmpty() && currentBlock < lengths.getFirst()) {
+                        yield countArrangements(conditions.substring(1), lengths,
+                                currentBlock + 1, memo);
+                    } else {
+                        yield 0L;
+                    }
                 }
                 case '.' -> {
                     if (currentBlock == 0) {
-                        return countArrangements(conditions.substring(1), lengths, currentBlock);
+                        yield countArrangements(conditions.substring(1), lengths,
+                                currentBlock, memo);
                     } else if (!lengths.isEmpty() && currentBlock == lengths.getFirst()) {
-                        return countArrangements(conditions.substring(1), lengths.subList(1, lengths.size()), 0);
+                        yield countArrangements(conditions.substring(1), lengths.subList(1
+                                , lengths.size()), 0, memo);
                     } else {
-                        return 0;
+                        yield 0L;
                     }
                 }
-                case '?' -> {
-                    return countArrangements(conditions.substring(1), lengths, currentBlock + 1)
-                            + countArrangements("." + conditions.substring(1), lengths, currentBlock);
-                }
-            }
-            throw new IllegalStateException("cannot happen");
+                case '?' -> countArrangements(conditions.substring(1), lengths,
+                        currentBlock + 1, memo)
+                        + countArrangements("." + conditions.substring(1), lengths,
+                        currentBlock, memo);
+                default -> throw new AssertionError("cannot happen");
+            };
+            memo.put(key, result);
+            return result;
         }
-
     }
 
-    int part1(List<String> data) {
+    long part1(List<String> data) {
         return data.stream()
                 .map(Row::parse)
-                .mapToInt(Row::countArrangements)
+                .mapToLong(Row::countArrangements)
                 .sum();
     }
 
@@ -213,11 +225,11 @@ public class Day12 {
     After unfolding, adding all of the possible arrangement counts together produces 525152.
      */
 
-    int part2(List<String> data) {
+    long part2(List<String> data) {
         return data.stream()
                 .map(Row::parse)
                 .map(r -> r.unfold(5))
-                .mapToInt(Row::countArrangements)
+                .mapToLong(Row::countArrangements)
                 .sum();
     }
 
