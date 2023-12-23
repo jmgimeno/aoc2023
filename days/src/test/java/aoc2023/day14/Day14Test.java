@@ -10,24 +10,32 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class Day14Test {
 
     static final String example = """
+            O....#....
+            O.OO#....#
+            .....##...
+            OO.#O....O
+            .O.....O#.
+            O.#..O.#.#
+            ..O..#O..O
+            .......O..
+            #....###..
+            #OO..#....
             """;
 
     static final Day14 day14 = new Day14();
 
     @Test
     @DisplayName("part1 - example data")
-    @Disabled("part1 - not implemented")
     void test1() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(-1, day14.part1(data));
+        assertEquals(136, day14.part1(data));
     }
 
     @Test
     @DisplayName("part1 - input data")
-    @Disabled("part1 - not implemented")
     void test2() {
         var data = IO.getResourceAsList("day14.txt");
-        assertEquals(-1, day14.part1(data));
+        assertEquals(106378, day14.part1(data));
     }
 
     @Test

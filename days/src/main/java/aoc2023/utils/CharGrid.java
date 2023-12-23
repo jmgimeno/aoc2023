@@ -46,9 +46,9 @@ public class CharGrid {
     @Override
     public String toString() {
         var sb = new StringBuilder();
-        for (int y = 0; y < height + 2; y++) {
-            for (int x = 0; x < width + 2; x++) {
-                sb.append(points[y][x]);
+        for (char[] row : points) {
+            for (char c : row) {
+                sb.append(c);
             }
             sb.append("\n");
         }

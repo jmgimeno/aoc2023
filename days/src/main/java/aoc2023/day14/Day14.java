@@ -1,5 +1,6 @@
 package aoc2023.day14;
 
+import aoc2023.utils.CharGrid;
 import aoc2023.utils.IO;
 import java.util.List;
 
@@ -39,6 +40,7 @@ public class Day14 {
     .......O..
     #....###..
     #OO..#....
+
     Start by tilting the lever so all of the rocks will slide north as far as they will go:
 
     OOOO.#.O..
@@ -75,8 +77,41 @@ public class Day14 {
     the north support beams?
     */
 
+    static class Platform extends CharGrid {
+        Platform(List<String> data) {
+            super(data, false);
+        }
+
+        void tiltNorth() {
+            for (int x = 0; x < width; x++)
+                for (int y = 1; y < height; y++) {
+                    char c = points[y][x];
+                    if (c == 'O') {
+                        for (int yy = y - 1; yy >= 0; yy--) {
+                            char cc = points[yy][x];
+                            if (cc == '.') {
+                                points[yy][x] = 'O';
+                                points[yy + 1][x] = '.';
+                            } else break;
+                        }
+                    }
+                }
+        }
+
+        int totalLoadNorthBeam() {
+            int total = 0;
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                    if (points[y][x] == 'O')
+                        total += height - y;
+            return total;
+        }
+    }
+
     int part1(List<String> data) {
-        throw new UnsupportedOperationException("part1");
+        var platform = new Platform(data);
+        platform.tiltNorth();
+        return platform.totalLoadNorthBeam();
     }
 
     /*
