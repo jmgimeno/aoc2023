@@ -10,24 +10,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class Day15Test {
 
     static final String example = """
+            rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7
             """;
 
     static final Day15 day15 = new Day15();
 
     @Test
     @DisplayName("part1 - example data")
-    @Disabled("part1 - not implemented")
     void test1() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(-1, day15.part1(data));
+        assertEquals(1320, day15.part1(data));
     }
 
     @Test
     @DisplayName("part1 - input data")
-    @Disabled("part1 - not implemented")
     void test2() {
         var data = IO.getResourceAsList("day15.txt");
-        assertEquals(-1, day15.part1(data));
+        assertEquals(506269, day15.part1(data));
     }
 
     @Test
