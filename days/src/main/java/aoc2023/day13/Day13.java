@@ -1,7 +1,11 @@
 package aoc2023.day13;
 
 import aoc2023.utils.IO;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class Day13 {
 
@@ -49,7 +53,7 @@ public class Day13 {
     each of the two columns point at the line between the columns:
 
     123456789
-    ><
+             ><
     #.##..##.
     ..#.##.#.
     ##......#
@@ -57,7 +61,7 @@ public class Day13 {
     ..#.##.#.
     ..##..##.
     #.#.##.#.
-    ><
+            ><
     123456789
     In this pattern, the line of reflection is the vertical line between columns 5 and 6. Because
     the vertical line is not perfectly in the middle of the pattern, part of the pattern (column 1)
@@ -85,15 +89,131 @@ public class Day13 {
 
     Find the line of reflection in each of the patterns in your notes. What number do you get after
     summarizing all of your notes?
+
+    Your puzzle answer was 33195.
     */
 
+    record Grid(List<String> data) {
+
+        int part1() {
+            return verticalReflections() + 100 * transpose().verticalReflections();
+        }
+
+        int verticalReflections() {
+            var length = data.getFirst().length();
+            var mirrors = new HashSet<>(IntStream.range(1, length).boxed().toList());
+            data.forEach(row -> mirrors.removeIf(mirror -> !reflects(row, mirror)));
+            return mirrors.stream().reduce(0, Integer::sum);
+        }
+
+        private boolean reflects(String row, int mirror) {
+            var length = row.length();
+            var left = row.substring(0, mirror);
+            var right = reversed(row).substring(0, length - mirror);
+            return right.endsWith(left) || left.endsWith(right);
+        }
+
+        private String reversed(String string) {
+            return new StringBuilder(string).reverse().toString();
+        }
+
+        Grid transpose() {
+            var result = new ArrayList<String>();
+            for (int i = 0; i < data.getFirst().length(); i++) {
+                var builder = new StringBuilder();
+                for (var row : data) {
+                    builder.append(row.charAt(i));
+                }
+                result.add(builder.toString());
+            }
+            return new Grid(result);
+        }
+    }
+
+    private List<Grid> parse(List<String> data) {
+        var result = new ArrayList<Grid>();
+        var grid = new ArrayList<String>();
+        for (var line : data) {
+            if (line.isEmpty()) {
+                result.add(new Grid(grid));
+                grid = new ArrayList<>();
+            } else {
+                grid.add(line);
+            }
+        }
+        if (!grid.isEmpty())
+            result.add(new Grid(grid));
+        return result;
+    }
+
     int part1(List<String> data) {
-        throw new UnsupportedOperationException("part1");
+        var grids = parse(data);
+        return grids.stream().mapToInt(Grid::part1).sum();
     }
 
     /*
+    --- Part Two ---
+    You resume walking through the valley of mirrors and - SMACK! - run directly into one.
+    Hopefully nobody was watching, because that must have been pretty embarrassing.
 
-    */
+    Upon closer inspection, you discover that every mirror has exactly one smudge: exactly one .
+    or # should be the opposite type.
+
+    In each pattern, you'll need to locate and fix the smudge that causes a different reflection
+    line to be valid. (The old reflection line won't necessarily continue being valid after the
+    smudge is fixed.)
+
+    Here's the above example again:
+
+    #.##..##.
+    ..#.##.#.
+    ##......#
+    ##......#
+    ..#.##.#.
+    ..##..##.
+    #.#.##.#.
+
+    #...##..#
+    #....#..#
+    ..##..###
+    #####.##.
+    #####.##.
+    ..##..###
+    #....#..#
+    The first pattern's smudge is in the top-left corner. If the top-left # were instead ., it
+    would have a different, horizontal line of reflection:
+
+    1 ..##..##. 1
+    2 ..#.##.#. 2
+    3v##......#v3
+    4^##......#^4
+    5 ..#.##.#. 5
+    6 ..##..##. 6
+    7 #.#.##.#. 7
+    With the smudge in the top-left corner repaired, a new horizontal line of reflection between
+    rows 3 and 4 now exists. Row 7 has no corresponding reflected row and can be ignored, but
+    every other row matches exactly: row 1 matches row 6, row 2 matches row 5, and row 3 matches
+    row 4.
+
+    In the second pattern, the smudge can be fixed by changing the fifth symbol on row 2 from .
+    to #:
+
+    1v#...##..#v1
+    2^#...##..#^2
+    3 ..##..### 3
+    4 #####.##. 4
+    5 #####.##. 5
+    6 ..##..### 6
+    7 #....#..# 7
+    Now, the pattern has a different horizontal line of reflection between rows 1 and 2.
+
+    Summarize your notes as before, but instead use the new different reflection lines. In this
+    example, the first pattern's new horizontal line has 3 rows above it and the second pattern's
+     new horizontal line has 1 row above it, summarizing to the value 400.
+
+    In each pattern, fix the smudge and find the different line of reflection. What number do you
+     get after summarizing the new reflection line in each pattern in your notes?
+     */
 
     int part2(List<String> data) {
         throw new UnsupportedOperationException("part2");
