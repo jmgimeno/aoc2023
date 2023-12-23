@@ -236,14 +236,18 @@ public class Day14 {
         int cycles = 1_000_000_000;
         var visited = new HashMap<String, Integer>();
         visited.put(platform.toString(), 0);
-        boolean foundCycle = false;
+        boolean repeated = false;
         for (int i = 1; i <= cycles; i++) {
             platform.cycle();
-            if (!foundCycle && visited.containsKey(platform.toString())) {
-                foundCycle = true;
+            if (repeated) continue;
+            if (visited.containsKey(platform.toString())) {
+                repeated = true;
                 var first = visited.get(platform.toString());
                 var period = i - first;
-                i = cycles - (cycles - i) % period; // we position at the end of the last full cycle
+                var restPeriods = (cycles - i) / period;
+                // we position at the end of the last full cycle
+                i += restPeriods * period;
+                // i = cycles - (cycles - i) % period;
             }
             visited.put(platform.toString(), i);
         }
