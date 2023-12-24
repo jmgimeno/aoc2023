@@ -134,11 +134,11 @@ public class Day17 {
         }
     }
 
-    record State(int heatLoss, Bobby bobby, int counter) implements Comparable<State> {
+    record State(int heatLoss, int heuristic, Bobby bobby, int counter) implements Comparable<State> {
 
         @Override
         public int compareTo(State o) {
-            return Integer.compare(heatLoss, o.heatLoss);
+            return Integer.compare(heatLoss + heuristic, o.heatLoss + o.heuristic);
         }
 
         record Key(Bobby bobby, int counter) {
@@ -158,12 +158,18 @@ public class Day17 {
             return points[p.y()][p.x()] - '0';
         }
 
+        int heuristic(Position p) { // We know the end is the bottom right corner
+            return Math.abs(p.x() - width) + Math.abs(p.y() - height);
+        }
+
         int part(int minStraight, int maxStraight) {
             var end = new Position(width, height);
             var queue = new PriorityQueue<State>();
             var visited = new HashSet<State.Key>();
-            queue.add(new State(heatLoss(new Position(2, 1)), new Bobby(new Position(2, 1), Direction.RIGHT), 1));
-            queue.add(new State(heatLoss(new Position(1, 2)), new Bobby(new Position(1, 2), Direction.DOWN), 1));
+            var p1 = new Position(2, 1);
+            queue.add(new State(heatLoss(p1), heuristic(p1), new Bobby(p1, Direction.RIGHT), 1));
+            var p2 = new Position(1, 2);
+            queue.add(new State(heatLoss(p2), heuristic(p2), new Bobby(p2, Direction.DOWN), 1));
             while (!queue.isEmpty()) {
                 var current = queue.remove();
                 if (!visited.add(current.key()))
@@ -192,7 +198,7 @@ public class Day17 {
             if (points[next.position().y()][next.position().x()] == '#')
                 return Optional.empty();
             var heatLoss = heatLoss(next.position());
-            return Optional.of(new State(state.heatLoss() + heatLoss, next, state.counter() + 1));
+            return Optional.of(new State(state.heatLoss() + heatLoss, heuristic(next.position()), next, state.counter() + 1));
         }
 
         Optional<State> left(State state, int minStraight) {
@@ -202,7 +208,7 @@ public class Day17 {
             if (points[next.position().y()][next.position().x()] == '#')
                 return Optional.empty();
             var heatLoss = heatLoss(next.position());
-            return Optional.of(new State(state.heatLoss() + heatLoss, next, 1));
+            return Optional.of(new State(state.heatLoss() + heatLoss, heuristic(next.position()), next, 1));
         }
 
         Optional<State> right(State state, int minStraight) {
@@ -212,7 +218,7 @@ public class Day17 {
             if (points[next.position().y()][next.position().x()] == '#')
                 return Optional.empty();
             var heatLoss = heatLoss(next.position());
-            return Optional.of(new State(state.heatLoss() + heatLoss, next, 1));
+            return Optional.of(new State(state.heatLoss() + heatLoss, heuristic(next.position()), next, 1));
         }
 
         int part1() {
