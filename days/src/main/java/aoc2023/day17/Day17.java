@@ -158,35 +158,35 @@ public class Day17 {
             return points[p.y()][p.x()] - '0';
         }
 
-        int part1() {
+        int part(int minStraight, int maxStraight) {
             var end = new Position(width, height);
             var queue = new PriorityQueue<State>();
             var visited = new HashSet<State.Key>();
-            queue.add(new State(heatLoss(new Position(2, 1)), new Bobby(new Position(2, 1), Direction.LEFT), 1));
+            queue.add(new State(heatLoss(new Position(2, 1)), new Bobby(new Position(2, 1), Direction.RIGHT), 1));
             queue.add(new State(heatLoss(new Position(1, 2)), new Bobby(new Position(1, 2), Direction.DOWN), 1));
             while (!queue.isEmpty()) {
                 var current = queue.remove();
                 if (!visited.add(current.key()))
                     continue;
-                if (current.bobby().position().equals(end))
+                if (current.bobby().position().equals(end) && minStraight <= current.counter() && current.counter() <= maxStraight)
                     return current.heatLoss;
-                queue.addAll(expand(current));
+                queue.addAll(expand(current, minStraight, maxStraight));
             }
             throw new IllegalStateException("no path found");
         }
 
-        List<State> expand(State state) {
-            var straight = straight(state);
-            var left = left(state);
-            var right = right(state);
+        List<State> expand(State state, int minStraight, int maxStraight) {
+            var straight = straight(state, maxStraight);
+            var left = left(state, minStraight);
+            var right = right(state, minStraight);
             return Stream.of(straight, left, right)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .toList();
         }
 
-        Optional<State> straight(State state) {
-            if (state.counter() == 3)
+        Optional<State> straight(State state, int maxStraight) {
+            if (state.counter() >= maxStraight)
                 return Optional.empty();
             var next = state.bobby().straight();
             if (points[next.position().y()][next.position().x()] == '#')
@@ -195,7 +195,9 @@ public class Day17 {
             return Optional.of(new State(state.heatLoss() + heatLoss, next, state.counter() + 1));
         }
 
-        Optional<State> left(State state) {
+        Optional<State> left(State state, int minStraight) {
+            if (state.counter() < minStraight)
+                return Optional.empty();
             var next = state.bobby().left();
             if (points[next.position().y()][next.position().x()] == '#')
                 return Optional.empty();
@@ -203,12 +205,22 @@ public class Day17 {
             return Optional.of(new State(state.heatLoss() + heatLoss, next, 1));
         }
 
-        Optional<State> right(State state) {
+        Optional<State> right(State state, int minStraight) {
+            if (state.counter() < minStraight)
+                return Optional.empty();
             var next = state.bobby().right();
             if (points[next.position().y()][next.position().x()] == '#')
                 return Optional.empty();
             var heatLoss = heatLoss(next.position());
             return Optional.of(new State(state.heatLoss() + heatLoss, next, 1));
+        }
+
+        int part1() {
+            return part(0, 3);
+        }
+
+        int part2() {
+            return part(4, 10);
         }
     }
 
@@ -218,11 +230,62 @@ public class Day17 {
     }
 
     /*
+    --- Part Two ---
+    The crucibles of lava simply aren't large enough to provide an adequate supply of lava to the machine
+    parts factory. Instead, the Elves are going to upgrade to ultra crucibles.
 
-     */
+    Ultra crucibles are even more difficult to steer than normal crucibles. Not only do they have trouble going
+    in a straight line, but they also have trouble turning!
+
+    Once an ultra crucible starts moving in a direction, it needs to move a minimum of four blocks in that
+    direction before it can turn (or even before it can stop at the end). However, it will eventually start to get
+    wobbly: an ultra crucible can move a maximum of ten consecutive blocks without turning.
+
+    In the above example, an ultra crucible could follow this path to minimize heat loss:
+
+    2>>>>>>>>1323
+    32154535v5623
+    32552456v4254
+    34465858v5452
+    45466578v>>>>
+    143859879845v
+    445787698776v
+    363787797965v
+    465496798688v
+    456467998645v
+    122468686556v
+    254654888773v
+    432267465553v
+
+    In the above example, an ultra crucible would incur the minimum possible heat loss of 94.
+
+    Here's another example:
+
+    111111111111
+    999999999991
+    999999999991
+    999999999991
+    999999999991
+
+    Sadly, an ultra crucible would need to take an unfortunate path like this one:
+
+    1>>>>>>>1111
+    9999999v9991
+    9999999v9991
+    9999999v9991
+    9999999v>>>>
+
+    This route causes the ultra crucible to incur the minimum possible heat loss of 71.
+
+    Directing the ultra crucible from the lava pool to the machine parts factory, what is the least
+    heat loss it can incur?
+
+    Your puzzle answer was 829.
+    */
 
     int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+        var map = new Map(data);
+        return map.part2();
     }
 
     public static void main(String[] args) {
@@ -230,7 +293,7 @@ public class Day17 {
         var data = IO.getResourceAsList("day17.txt");
         var part1 = day17.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day17.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day17.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
