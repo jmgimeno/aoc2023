@@ -134,10 +134,18 @@ public class Day17 {
         }
     }
 
-    record State(int length, Bobby bobby, int counter) implements Comparable<State> {
+    record State(int heatLoss, Bobby bobby, int counter) implements Comparable<State> {
+
         @Override
         public int compareTo(State o) {
-            return Integer.compare(length, o.length); // swapped cause min length first
+            return Integer.compare(heatLoss, o.heatLoss);
+        }
+
+        record Key(Bobby bobby, int counter) {
+        }
+
+        Key key() {
+            return new Key(bobby, counter); // to not repeat states the counter is needed
         }
     }
 
@@ -153,15 +161,15 @@ public class Day17 {
         int part1() {
             var end = new Position(width, height);
             var queue = new PriorityQueue<State>();
-            var visited = new HashSet<State>();
+            var visited = new HashSet<State.Key>();
             queue.add(new State(heatLoss(new Position(2, 1)), new Bobby(new Position(2, 1), Direction.LEFT), 1));
             queue.add(new State(heatLoss(new Position(1, 2)), new Bobby(new Position(1, 2), Direction.DOWN), 1));
             while (!queue.isEmpty()) {
                 var current = queue.remove();
-                if (!visited.add(current))
+                if (!visited.add(current.key()))
                     continue;
                 if (current.bobby().position().equals(end))
-                    return current.length;
+                    return current.heatLoss;
                 queue.addAll(expand(current));
             }
             throw new IllegalStateException("no path found");
@@ -184,7 +192,7 @@ public class Day17 {
             if (points[next.position().y()][next.position().x()] == '#')
                 return Optional.empty();
             var heatLoss = heatLoss(next.position());
-            return Optional.of(new State(state.length() + heatLoss, next, state.counter() + 1));
+            return Optional.of(new State(state.heatLoss() + heatLoss, next, state.counter() + 1));
         }
 
         Optional<State> left(State state) {
@@ -192,7 +200,7 @@ public class Day17 {
             if (points[next.position().y()][next.position().x()] == '#')
                 return Optional.empty();
             var heatLoss = heatLoss(next.position());
-            return Optional.of(new State(state.length() + heatLoss, next, 1));
+            return Optional.of(new State(state.heatLoss() + heatLoss, next, 1));
         }
 
         Optional<State> right(State state) {
@@ -200,7 +208,7 @@ public class Day17 {
             if (points[next.position().y()][next.position().x()] == '#')
                 return Optional.empty();
             var heatLoss = heatLoss(next.position());
-            return Optional.of(new State(state.length() + heatLoss, next, 1));
+            return Optional.of(new State(state.heatLoss() + heatLoss, next, 1));
         }
     }
 
