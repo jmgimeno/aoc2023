@@ -1,7 +1,13 @@
 package aoc2023.day17;
 
+import aoc2023.utils.CharGrid;
 import aoc2023.utils.IO;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.stream.Stream;
 
 public class Day17 {
 
@@ -77,13 +83,135 @@ public class Day17 {
     three consecutive blocks in the same direction, what is the least heat loss it can incur?
     */
 
+    record Position(int x, int y) {
+        Position up() {
+            return new Position(x, y - 1);
+        }
+
+        Position right() {
+            return new Position(x + 1, y);
+        }
+
+        Position down() {
+            return new Position(x, y + 1);
+        }
+
+        Position left() {
+            return new Position(x - 1, y);
+        }
+    }
+
+    enum Direction {
+        UP, RIGHT, DOWN, LEFT
+    }
+
+    record Bobby(Position position, Direction direction) {
+        Bobby straight() {
+            return switch (direction) {
+                case UP -> new Bobby(position.up(), Direction.UP);
+                case RIGHT -> new Bobby(position.right(), Direction.RIGHT);
+                case DOWN -> new Bobby(position.down(), Direction.DOWN);
+                case LEFT -> new Bobby(position.left(), Direction.LEFT);
+            };
+        }
+
+        Bobby left() {
+            return switch (direction) {
+                case UP -> new Bobby(position.left(), Direction.LEFT);
+                case RIGHT -> new Bobby(position.up(), Direction.UP);
+                case DOWN -> new Bobby(position.right(), Direction.RIGHT);
+                case LEFT -> new Bobby(position.down(), Direction.DOWN);
+            };
+        }
+
+        Bobby right() {
+            return switch (direction) {
+                case UP -> new Bobby(position.right(), Direction.RIGHT);
+                case RIGHT -> new Bobby(position.down(), Direction.DOWN);
+                case DOWN -> new Bobby(position.left(), Direction.LEFT);
+                case LEFT -> new Bobby(position.up(), Direction.UP);
+            };
+        }
+    }
+
+    record State(int length, Bobby bobby, int counter) implements Comparable<State> {
+        @Override
+        public int compareTo(State o) {
+            return Integer.compare(length, o.length); // swapped cause min length first
+        }
+    }
+
+    static class Map extends CharGrid {
+        public Map(List<String> data) {
+            super(data, '#');
+        }
+
+        int heatLoss(Position p) {
+            return points[p.y()][p.x()] - '0';
+        }
+
+        int part1() {
+            var end = new Position(width, height);
+            var queue = new PriorityQueue<State>();
+            var visited = new HashSet<State>();
+            queue.add(new State(heatLoss(new Position(2, 1)), new Bobby(new Position(2, 1), Direction.LEFT), 1));
+            queue.add(new State(heatLoss(new Position(1, 2)), new Bobby(new Position(1, 2), Direction.DOWN), 1));
+            while (!queue.isEmpty()) {
+                var current = queue.remove();
+                if (!visited.add(current))
+                    continue;
+                if (current.bobby().position().equals(end))
+                    return current.length;
+                queue.addAll(expand(current));
+            }
+            throw new IllegalStateException("no path found");
+        }
+
+        List<State> expand(State state) {
+            var straight = straight(state);
+            var left = left(state);
+            var right = right(state);
+            return Stream.of(straight, left, right)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toList();
+        }
+
+        Optional<State> straight(State state) {
+            if (state.counter() == 3)
+                return Optional.empty();
+            var next = state.bobby().straight();
+            if (points[next.position().y()][next.position().x()] == '#')
+                return Optional.empty();
+            var heatLoss = heatLoss(next.position());
+            return Optional.of(new State(state.length() + heatLoss, next, state.counter() + 1));
+        }
+
+        Optional<State> left(State state) {
+            var next = state.bobby().left();
+            if (points[next.position().y()][next.position().x()] == '#')
+                return Optional.empty();
+            var heatLoss = heatLoss(next.position());
+            return Optional.of(new State(state.length() + heatLoss, next, 1));
+        }
+
+        Optional<State> right(State state) {
+            var next = state.bobby().right();
+            if (points[next.position().y()][next.position().x()] == '#')
+                return Optional.empty();
+            var heatLoss = heatLoss(next.position());
+            return Optional.of(new State(state.length() + heatLoss, next, 1));
+        }
+    }
+
     int part1(List<String> data) {
-        throw new UnsupportedOperationException("part1");
+        var map = new Map(data);
+        return map.part1();
     }
 
     /*
 
-    */
+     */
 
     int part2(List<String> data) {
         throw new UnsupportedOperationException("part2");
