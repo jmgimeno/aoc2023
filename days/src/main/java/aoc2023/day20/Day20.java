@@ -391,6 +391,20 @@ public class Day20 {
                     ", button=" + button +
                     '}';
         }
+
+        boolean pushButtonOnceRx() {
+            ongoing.add(button.push());
+            while (!ongoing.isEmpty()) {
+                var message = ongoing.poll();
+                if (message.destination.equals("rx") && message.pulse == Pulse.LOW) {
+                    return true;
+                }
+                var module = modules.getOrDefault(message.destination, new Conjunction.Untyped(message.destination));
+                var messages = module.process(message.origin, message.pulse);
+                messages.forEach(ongoing::add);
+            }
+            return false;
+        }
     }
 
     long part1(List<String> data) {
@@ -409,8 +423,13 @@ public class Day20 {
     named rx?
      */
 
-    int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+    long part2(List<String> data) {
+        var configuration = Configuration.parse(data);
+        long count = 0;
+        while (!configuration.pushButtonOnceRx()) {
+            count++;
+        }
+        return count;
     }
 
     public static void main(String[] args) {
@@ -418,7 +437,7 @@ public class Day20 {
         var data = IO.getResourceAsList("day20.txt");
         var part1 = day20.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day20.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day20.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
