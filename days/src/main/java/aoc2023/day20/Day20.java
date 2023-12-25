@@ -1,7 +1,8 @@
 package aoc2023.day20;
 
 import aoc2023.utils.IO;
-import java.util.List;
+
+import java.util.*;
 
 public class Day20 {
 
@@ -152,15 +153,261 @@ public class Day20 {
     be sent after pushing the button 1000 times, waiting for all pulses to be fully handled after
     each push of the button. What do you get if you multiply the total number of low pulses sent by
     the total number of high pulses sent?
+
+    Your puzzle answer was 666795063.
     */
 
-    int part1(List<String> data) {
-        throw new UnsupportedOperationException("part1");
+    enum Pulse {
+        HIGH, LOW
+    }
+
+    static class QueueCounter {
+        long countLow = 0L;
+        long countHight = 0L;
+
+        final Queue<Configuration.Message> queue = new LinkedList<>();
+
+        void add(Configuration.Message message) {
+            if (message.pulse == Pulse.LOW) {
+                countLow++;
+            } else {
+                countHight++;
+            }
+            queue.add(message);
+        }
+
+        Configuration.Message poll() {
+            return queue.poll();
+        }
+
+        boolean isEmpty() {
+            return queue.isEmpty();
+        }
+
+        long part1() {
+            return countLow * countHight;
+        }
+    }
+
+    static abstract class Module {
+        final protected String name;
+        final protected List<String> destinations;
+
+        Module(String name, List<String> destinations) {
+            this.name = name;
+            this.destinations = destinations;
+        }
+
+        abstract List<Configuration.Message> process(String from, Pulse pulse);
+    }
+
+    static class Broadcaster extends Module {
+        Broadcaster(String name, List<String> destinations) {
+            super(name, destinations);
+        }
+
+        @Override
+        List<Configuration.Message> process(String from, Pulse pulse) {
+            return destinations.stream().map(d -> new Configuration.Message(name, d, pulse)).toList();
+        }
+
+        @Override
+        public String toString() {
+            return "Broadcaster{" +
+                    "name='" + name + '\'' +
+                    ", destinations=" + destinations +
+                    '}';
+        }
+    }
+
+    static class FlipFlop extends Module {
+        Pulse state;
+
+        FlipFlop(String name, List<String> destinations) {
+            super(name, destinations);
+            state = Pulse.LOW;
+        }
+
+        @Override
+        List<Configuration.Message> process(String from, Pulse pulse) {
+            if (pulse == Pulse.LOW) {
+                state = state == Pulse.LOW ? Pulse.HIGH : Pulse.LOW;
+                return destinations.stream().map(d -> new Configuration.Message(name, d, state)).toList();
+            } else {
+                return List.of();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "FlipFlop{" +
+                    "name='" + name + '\'' +
+                    ", destinations=" + destinations +
+                    ", state=" + state +
+                    '}';
+        }
+    }
+
+    static class Conjunction extends Module {
+        Map<String, Pulse> state;
+
+        Conjunction(String name, List<String> destinations) {
+            super(name, destinations);
+            state = new HashMap<>();
+        }
+
+        void addInput(String input) {
+            state.put(input, Pulse.LOW);
+        }
+
+        @Override
+        List<Configuration.Message> process(String from, Pulse pulse) {
+            state.put(from, pulse);
+            if (state.values().stream().allMatch(p -> p == Pulse.HIGH)) {
+                return destinations.stream().map(d -> new Configuration.Message(name, d, Pulse.LOW)).toList();
+            } else {
+                return destinations.stream().map(d -> new Configuration.Message(name, d, Pulse.HIGH)).toList();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Conjunction{" +
+                    "name='" + name + '\'' +
+                    ", destinations=" + destinations +
+                    ", state=" + state +
+                    '}';
+        }
+
+        static class Untyped extends Module {
+            Untyped(String name) {
+                super(name, List.of());
+            }
+
+            @Override
+            List<Configuration.Message> process(String from, Pulse pulse) {
+                return List.of();
+            }
+
+            @Override
+            public String toString() {
+                return "Untyped{" +
+                        "name='" + name +
+                        '}';
+            }
+        }
+    }
+
+    static class Button {
+        final Module broadcaster;
+
+        Button(Module broadcaster) {
+            this.broadcaster = broadcaster;
+        }
+
+        Configuration.Message push() {
+            return new Configuration.Message("button", "broadcaster", Pulse.LOW);
+        }
+
+        @Override
+        public String toString() {
+            return "Button{" +
+                    "broadcaster=" + broadcaster +
+                    '}';
+        }
+    }
+
+    static class Configuration {
+        final Map<String, Module> modules;
+        final Button button;
+
+        Configuration(Map<String, Module> modules, Button button) {
+            this.modules = modules;
+            this.button = button;
+        }
+
+        static Configuration parse(List<String> data) {
+            var modules = new HashMap<String, Module>();
+            for (var line : data) {
+                var parts = line.split("->");
+                var name = parts[0].trim();
+                var destinations = Arrays.stream(parts[1].split(",")).map(String::trim).toList();
+                var module = parseModule(name, destinations);
+                modules.put(module.name, module);
+            }
+            var button = new Button(modules.get("broadcaster"));
+            addInputs(modules);
+            return new Configuration(modules, button);
+        }
+
+        private static void addInputs(HashMap<String, Module> modules) {
+            for (var module : modules.values()) {
+                for (var destination : module.destinations) {
+                    var destinationModule = modules.get(destination);
+                    if (destinationModule instanceof Conjunction conjunction) {
+                        conjunction.addInput(module.name);
+                    }
+                }
+            }
+        }
+
+        private static Module parseModule(String name, List<String> destinations) {
+            if (name.startsWith("%")) {
+                return new FlipFlop(name.substring(1), destinations);
+            } else if (name.startsWith("&")) {
+                return new Conjunction(name.substring(1), destinations);
+            } else if (name.equals("broadcaster")) {
+                return new Broadcaster(name, destinations);
+            } else {
+                throw new IllegalArgumentException("Unknown module type: " + name);
+            }
+        }
+
+        record Message(String origin, String destination, Pulse pulse) {
+        }
+
+        final QueueCounter ongoing = new QueueCounter();
+
+        void pushButtonOnce() {
+            ongoing.add(button.push());
+            while (!ongoing.isEmpty()) {
+                var message = ongoing.poll();
+                var module = modules.getOrDefault(message.destination, new Conjunction.Untyped(message.destination));
+                var messages = module.process(message.origin, message.pulse);
+                messages.forEach(ongoing::add);
+            }
+        }
+
+        void pushButtonMany(int times) {
+            for (int i = 0; i < times; i++) {
+                pushButtonOnce();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Configuration{" +
+                    "modules=" + modules +
+                    ", button=" + button +
+                    '}';
+        }
+    }
+
+    long part1(List<String> data) {
+        var configuration = Configuration.parse(data);
+        configuration.pushButtonMany(1000);
+        return configuration.ongoing.part1();
     }
 
     /*
+    --- Part Two ---
+    The final machine responsible for moving the sand down to Island Island has a module attached
+    named rx. The machine turns on when a single low pulse is sent to rx.
 
-    */
+    Reset all modules to their default states. Waiting for all pulses to be fully handled after each button
+    press, what is the fewest number of button presses required to deliver a single low pulse to the module
+    named rx?
+     */
 
     int part2(List<String> data) {
         throw new UnsupportedOperationException("part2");
