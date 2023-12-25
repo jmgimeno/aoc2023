@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,21 +26,21 @@ public class Day19 {
 
     x: Extremely cool looking m: Musical (it makes a noise when you hit it) a: Aerodynamic s: Shiny
     Then, each part is sent through a series of workflows that will ultimately accept or reject the
-    part. Each workflow has a name and contains a list of rules; each rule specifies a condition and
+    part. Each name has a name and contains a list of rules; each rule specifies a condition and
     where to send the part if the condition is true. The first rule that matches the part being
     considered is applied immediately, and the part moves on to the destination described by the
-    rule. (The last rule in each workflow has no condition and always applies if reached.)
+    rule. (The last rule in each name has no condition and always applies if reached.)
 
-    Consider the workflow ex{x>10:one,m<20:two,a>30:R,A}. This workflow is named ex and contains
-    four rules. If workflow ex were considering a specific part, it would perform the following
+    Consider the name ex{x>10:one,m<20:two,a>30:R,A}. This name is named ex and contains
+    four rules. If name ex were considering a specific part, it would perform the following
     steps in order:
 
-    Rule "x>10:one": If the part's x is more than 10, send the part to the workflow named one. Rule
-    "m<20:two": Otherwise, if the part's m is less than 20, send the part to the workflow named two.
+    Rule "x>10:one": If the part's x is more than 10, send the part to the name named one. Rule
+    "m<20:two": Otherwise, if the part's m is less than 20, send the part to the name named two.
     Rule "a>30:R": Otherwise, if the part's a is more than 30, the part is immediately rejected (R).
     Rule "A": Otherwise, because no other rules matched the part, the part is immediately accepted
     (A).
-    If a part is sent to another workflow, it immediately switches to the start of that workflow
+    If a part is sent to another name, it immediately switches to the start of that name
     instead and never returns. If a part is accepted (sent to A) or rejected (sent to R), the part
     immediately stops any further processing.
 
@@ -67,7 +66,7 @@ public class Day19 {
     {x=2461,m=1339,a=466,s=291}
     {x=2127,m=1623,a=2188,s=1013}
     The workflows are listed first, followed by a blank line, then the ratings of the parts the
-    Elves would like you to sort. All parts begin in the workflow named in. In this example, the
+    Elves would like you to sort. All parts begin in the name named in. In this example, the
     five listed parts go through the following workflows:
 
     {x=787,m=2655,a=1222,s=2876}: in -> qqz -> qs -> lnx -> A {x=1679,m=44,a=2067,s=496}: in -> px
@@ -103,7 +102,25 @@ public class Day19 {
         }
     }
 
-    static class RuleBook implements Predicate<Part> {
+    @FunctionalInterface
+    public interface PartChecker {
+        boolean check(Part part);
+    }
+
+    public record Work(MultiPart multiPart, Destination destination) {
+    }
+
+    public interface TotalExecutor {
+        Destination executePart(Part part);
+
+        List<Work> executeMultiPart(MultiPart multiPart);
+    }
+
+    public interface PartialExecutor {
+        Optional<Destination> executePart(Part part);
+    }
+
+    static class RuleBook implements PartChecker {
         Map<String, Workflow> workflows;
 
         public RuleBook(Map<String, Workflow> workflows) {
@@ -118,12 +135,12 @@ public class Day19 {
         }
 
         @Override
-        public boolean test(Part part) {
-            var ruleName = "in";
+        public boolean check(Part part) {
+            var workflowName = "in";
             do {
-                var rule = workflows.get(ruleName);
-                switch (rule.apply(part)) {
-                    case Destination.GoTo(String workflow) -> ruleName = workflow;
+                var workflow = workflows.get(workflowName);
+                switch (workflow.executePart(part)) {
+                    case Destination.GoTo(String next) -> workflowName = next;
                     case Destination.Accept() -> {
                         return true;
                     }
@@ -133,17 +150,58 @@ public class Day19 {
                 }
             } while (true);
         }
+
+        public List<MultiPart> check(MultiPart multiPart) {
+            var accepted = new ArrayList<MultiPart>();
+            var work = new ArrayList<Work>();
+            work.add(new Work(multiPart, new Destination.GoTo("in")));
+            while (!work.isEmpty()) {
+                var next = work.removeFirst();
+                var multiPart1 = next.multiPart;
+                var destination = next.destination;
+                if (destination instanceof Destination.GoTo(String name)) {
+                    var workflow = workflows.get(name);
+                    var works = workflow.executeMultiPart(multiPart1);
+                    work.addAll(works);
+                } else if (destination instanceof Destination.Accept) {
+                    accepted.add(multiPart1);
+                } else if (destination instanceof Destination.Reject) {
+                    // do nothing
+                }
+            }
+            return accepted;
+        }
     }
 
-    record Workflow(String name, List<Rule> rules) implements Function<Part, Destination> {
+    record Workflow(String name, List<Rule> rules) implements TotalExecutor {
         @Override
-        public Destination apply(Part part) {
+        public Destination executePart(Part part) {
             return rules.stream()
-                    .map(rule -> rule.apply(part))
+                    .map(rule -> rule.executePart(part))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .findFirst()
                     .orElseThrow();
+        }
+
+        @Override
+        public List<Work> executeMultiPart(MultiPart multiPart) {
+            assert multiPart.notEmpty();
+            var work = new ArrayList<Work>();
+            for (var rule : rules) {
+                if (rule instanceof Rule.IfThen ifThen) {
+                    var split = multiPart.split(ifThen.condition);
+                    if (split.ifTrue().notEmpty()) {
+                        work.add(new Work(split.ifTrue(), ifThen.destination));
+                    }
+                    if (split.ifFalse().notEmpty()) {
+                        multiPart = split.ifFalse();
+                    }
+                } else if (rule instanceof Rule.Else elseRule) {
+                    work.add(new Work(multiPart, elseRule.destination));
+                }
+            }
+            return work;
         }
 
         public static Workflow parse(String data) {
@@ -157,7 +215,7 @@ public class Day19 {
         }
     }
 
-    sealed interface Condition extends Predicate<Part> {
+    sealed interface Condition extends PartChecker {
         static Condition parse(String part) {
             if (part.contains("<")) {
                 var parts = part.split("<");
@@ -199,62 +257,62 @@ public class Day19 {
 
         record xLt(int value) implements Condition {
             @Override
-            public boolean test(Part part) {
+            public boolean check(Part part) {
                 return part.x() < value;
             }
         }
 
         record mLt(int value) implements Condition {
             @Override
-            public boolean test(Part part) {
+            public boolean check(Part part) {
                 return part.m() < value;
             }
         }
 
         record aLt(int value) implements Condition {
             @Override
-            public boolean test(Part part) {
+            public boolean check(Part part) {
                 return part.a() < value;
             }
         }
 
         record sLt(int value) implements Condition {
             @Override
-            public boolean test(Part part) {
+            public boolean check(Part part) {
                 return part.s() < value;
             }
         }
 
         record xGt(int value) implements Condition {
             @Override
-            public boolean test(Part part) {
+            public boolean check(Part part) {
                 return part.x() > value;
             }
         }
 
         record lGt(int value) implements Condition {
             @Override
-            public boolean test(Part part) {
+            public boolean check(Part part) {
                 return part.m() > value;
             }
         }
 
         record aGt(int value) implements Condition {
             @Override
-            public boolean test(Part part) {
+            public boolean check(Part part) {
                 return part.a() > value;
             }
         }
 
         record sGt(int value) implements Condition {
             @Override
-            public boolean test(Part part) {
+            public boolean check(Part part) {
                 return part.s() > value;
             }
         }
     }
 
-    sealed interface Rule extends Function<Part, Optional<Destination>> {
+    sealed interface Rule extends PartialExecutor {
 
         static Rule parse(String data) {
             // a>1716:R
@@ -276,8 +334,8 @@ public class Day19 {
             }
 
             @Override
-            public Optional<Destination> apply(Part part) {
-                return condition.test(part) ? Optional.of(destination) : Optional.empty();
+            public Optional<Destination> executePart(Part part) {
+                return condition.check(part) ? Optional.of(destination) : Optional.empty();
             }
         }
 
@@ -289,7 +347,7 @@ public class Day19 {
             }
 
             @Override
-            public Optional<Destination> apply(Part part) {
+            public Optional<Destination> executePart(Part part) {
                 return Optional.of(destination);
             }
         }
@@ -306,7 +364,7 @@ public class Day19 {
             }
         }
 
-        record GoTo(String workflow) implements Destination {
+        record GoTo(String name) implements Destination {
         }
 
         record Accept() implements Destination {
@@ -338,7 +396,7 @@ public class Day19 {
     int part1(List<String> data) {
         var parsed = Parsed.parse(data);
         return parsed.parts().stream()
-                .filter(parsed.ruleBook())
+                .filter(parsed.ruleBook()::check)
                 .mapToInt(part -> part.x() + part.m() + part.a() + part.s())
                 .sum();
     }
@@ -359,8 +417,62 @@ public class Day19 {
     relevant. How many distinct combinations of ratings will be accepted by the Elves' workflows?
     */
 
-    int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+    public record Split(MultiPart ifTrue, MultiPart ifFalse) {
+    }
+
+    public record MultiPart(int minX, int maxX, int minM, int maxM, int minA, int maxA, int minS,
+                            int maxS) {
+
+        long range() {
+            return (long) (maxX - minX + 1) * (maxM - minM + 1) * (maxA - minA + 1) * (maxS - minS + 1);
+        }
+
+        boolean notEmpty() {
+            return minX <= maxX && minM <= maxM && minA <= maxA && minS <= maxS;
+        }
+
+        static MultiPart make() {
+            return new MultiPart(1, 4000, 1, 4000, 1, 4000, 1, 4000);
+        }
+
+        Split split(Condition condition) {
+            MultiPart ifTrue = null, ifFalse = null;
+            if (condition instanceof Condition.xLt xLt) {
+                ifTrue = new MultiPart(minX, xLt.value - 1, minM, maxM, minA, maxA, minS, maxS);
+                ifFalse = new MultiPart(xLt.value, maxX, minM, maxM, minA, maxA, minS, maxS);
+            } else if (condition instanceof Condition.mLt mLt) {
+                ifTrue = new MultiPart(minX, maxX, minM, mLt.value - 1, minA, maxA, minS, maxS);
+                ifFalse = new MultiPart(minX, maxX, mLt.value, maxM, minA, maxA, minS, maxS);
+            } else if (condition instanceof Condition.aLt aLt) {
+                ifTrue = new MultiPart(minX, maxX, minM, maxM, minA, aLt.value - 1, minS, maxS);
+                ifFalse = new MultiPart(minX, maxX, minM, maxM, aLt.value, maxA, minS, maxS);
+            } else if (condition instanceof Condition.sLt sLt) {
+                ifTrue = new MultiPart(minX, maxX, minM, maxM, minA, maxA, minS, sLt.value - 1);
+                ifFalse = new MultiPart(minX, maxX, minM, maxM, minA, maxA, sLt.value, maxS);
+            } else if (condition instanceof Condition.xGt xGt) {
+                ifTrue = new MultiPart(xGt.value + 1, maxX, minM, maxM, minA, maxA, minS, maxS);
+                ifFalse = new MultiPart(minX, xGt.value, minM, maxM, minA, maxA, minS, maxS);
+            } else if (condition instanceof Condition.lGt lGt) {
+                ifTrue = new MultiPart(minX, maxX, lGt.value + 1, maxM, minA, maxA, minS, maxS);
+                ifFalse = new MultiPart(minX, maxX, minM, lGt.value, minA, maxA, minS, maxS);
+            } else if (condition instanceof Condition.aGt aGt) {
+                ifTrue = new MultiPart(minX, maxX, minM, maxM, aGt.value + 1, maxA, minS, maxS);
+                ifFalse = new MultiPart(minX, maxX, minM, maxM, minA, aGt.value, minS, maxS);
+            } else if (condition instanceof Condition.sGt sGt) {
+                ifTrue = new MultiPart(minX, maxX, minM, maxM, minA, maxA, sGt.value + 1, maxS);
+                ifFalse = new MultiPart(minX, maxX, minM, maxM, minA, maxA, minS, sGt.value);
+            }
+            return new Split(ifTrue, ifFalse);
+        }
+    }
+
+    long part2(List<String> data) {
+        var ruleBoolk = Parsed.parse(data).ruleBook();
+        var multiPart = MultiPart.make();
+        var accepted = ruleBoolk.check(multiPart);
+        return accepted.stream()
+                .mapToLong(MultiPart::range)
+                .sum();
     }
 
     public static void main(String[] args) {
@@ -368,7 +480,7 @@ public class Day19 {
         var data = IO.getResourceAsList("day19.txt");
         var part1 = day19.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day19.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day19.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
