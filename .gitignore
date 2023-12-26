@@ -1,3 +1,6 @@
+# AoC data files
+day*.txt
+
 ### Java template
 # Compiled class file
 *.class

@@ -27,20 +27,12 @@ public class DayGenerator {
             import java.util.List;
 
             public class Day\{ day } {
-                        
-                /*
-                \{ formatInstructions(instructions) }
-                */
 
-                int part1(List<String> data) {
+                long part1(List<String> data) {
                     throw new UnsupportedOperationException("part1");
                 }
 
-                /*
-
-                */
-
-                int part2(List<String> data) {
+                long part2(List<String> data) {
                     throw new UnsupportedOperationException("part2");
                 }
 
@@ -81,7 +73,7 @@ public class DayGenerator {
                     @Disabled("part1 - not implemented")
                     void test1() {
                         var data = IO.splitLinesAsList(example);
-                        assertEquals(-1, day\{ day }.part1(data));
+                        assertEquals(-1L, day\{ day }.part1(data));
                     }
 
                     @Test
@@ -89,7 +81,7 @@ public class DayGenerator {
                     @Disabled("part1 - not implemented")
                     void test2() {
                         var data = IO.getResourceAsList("day\{ day }.txt");
-                        assertEquals(-1, day\{ day }.part1(data));
+                        assertEquals(-1L, day\{ day }.part1(data));
                     }
 
                     @Test
@@ -97,7 +89,7 @@ public class DayGenerator {
                     @Disabled("part2 - not implemented")
                     void test3() {
                         var data = IO.splitLinesAsList(example);
-                        assertEquals(-1, day\{ day }.part2(data));
+                        assertEquals(-1L, day\{ day }.part2(data));
                     }
 
                     @Test
@@ -105,7 +97,7 @@ public class DayGenerator {
                     @Disabled("part2 - not implemented")
                     void test4() {
                         var data = IO.getResourceAsList("day\{ day }.txt");
-                        assertEquals(-1, day\{ day }.part2(data));
+                        assertEquals(-1L, day\{ day }.part2(data));
                     }
                 }
                 """ ;
