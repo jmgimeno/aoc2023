@@ -3,9 +3,7 @@ package aoc2023.day21;
 import aoc2023.utils.CharGrid;
 import aoc2023.utils.IO;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Day21 {
@@ -153,29 +151,41 @@ public class Day21 {
             throw new IllegalArgumentException("Not found: " + s);
         }
 
-        private boolean isAllowed(Position p) {
-            return inBounds(p) && points[p.y][p.x] == '.'  || points[p.y][p.x] == 'S';
+        protected boolean isAllowed(Position p) {
+            return inBounds(p) && points[p.y][p.x] == '.' || points[p.y][p.x] == 'S';
         }
 
-        private boolean inBounds(Position p) {
+        protected boolean inBounds(Position p) {
             return p.x >= 0 && p.x < width && p.y >= 0 && p.y < height;
         }
 
-        private int walk(int steps) {
+        protected Position normalize(Position p) {
+            return p;
+        }
+
+        record State(int steps, int size) {}
+
+        String key(Set<Position> points) {
+            var normalized = points.stream().map(this::normalize).collect(Collectors.toSet());
+            var key = new StringBuilder();
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width ; x++) {
+                    key.append(normalized.contains(new Position(x, y)) ? '#' : '.');
+                }
+            }
+            return key.toString();
+        }
+
+        int walk(int steps) {
             var points = Set.of(start);
-            var stepsTaken = 0;
-            while (stepsTaken < steps) {
+            for (int stepsTaken = 0; stepsTaken < steps; stepsTaken++) {
                 var nextPoints = points.stream()
                         .flatMap(p1 -> p1.candidates(p1).stream())
                         .filter(this::isAllowed)
                         .collect(Collectors.toSet());
-                if (nextPoints.isEmpty()) {
-                    break;
-                }
                 points = nextPoints;
-                stepsTaken++;
             }
-            return points.size();
+            return points.size() ;
         }
     }
 
@@ -247,8 +257,114 @@ public class Day21 {
     garden plots could the Elf reach in exactly 26501365 steps?
      */
 
-    int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+
+
+    static class InfiniteMap extends Map {
+
+        record Quadrant(int x, int y) {
+            Quadrant move(int dx, int dy) {
+                return new Quadrant(x + dx, y + dy);
+            }
+        }
+
+        class Bobby {
+            Position position;
+            Set<Quadrant> quadrants;
+
+            Bobby(Position position, Set<Quadrant> quadrants) {
+                this.position = position;
+                this.quadrants = quadrants;
+            }
+
+            @Override
+            public String toString() {
+                return "Bobby{" +
+                        "position=" + position +
+                        ", quadrants=" + quadrants +
+                        '}';
+            }
+
+            Optional<Bobby> move(Direction direction) {
+                var newPosition = direction.apply(position);
+                if (inBounds(newPosition)) {
+                    if (isAllowed(newPosition)) {
+                        return Optional.of(new Bobby(newPosition, quadrants));
+                    } else {
+                        return Optional.empty();
+                    }
+                } else {
+                    var normalized = normalize(newPosition);
+                    if (!isAllowed(normalized)) {
+                        return Optional.empty();
+                    }
+                    int dx = getDifference(newPosition.x, normalized.x);
+                    int dy = getDifference(newPosition.y, normalized.y);
+                    var newQuadrants = quadrants.stream()
+                            .map(q -> q.move(dx, dy))
+                            .collect(Collectors.toSet());
+                    return Optional.of(new Bobby(normalized, newQuadrants));
+                }
+            }
+
+            private static int getDifference(int newPosition, int normalized) {
+                int diff = 0;
+                if (newPosition < normalized) {
+                    diff = -1;
+                } else if (newPosition > normalized) {
+                    diff = 1;
+                }
+                return diff;
+            }
+        }
+
+        InfiniteMap(List<String> data) {
+            super(data);
+        }
+
+        protected Position normalize(Position p) {
+            var x = p.x % width;
+            x = x < 0 ? x + width : x;
+            var y =p.y % height;
+            y = y < 0 ? y + height : y;
+            return new Position(x, y);
+        }
+
+        @Override
+        protected boolean isAllowed(Position p) {
+            return super.isAllowed(normalize(p));
+        }
+
+        int walk(int steps) {
+            var bob = new Bobby(start, Set.of(new Quadrant(0, 0)));
+            var bobbies = Set.of(bob);
+            for (int stepsTaken = 0; stepsTaken < steps; stepsTaken++) {
+                var newPositionsAndQuadrants = bobbies.stream()
+                        .flatMap(b -> Arrays.stream(Direction.directions)
+                                .map(b::move)
+                                .filter(Optional::isPresent)
+                                .map(Optional::get))
+                        .collect(Collectors.groupingBy(
+                                b -> b.position,
+                                Collectors.reducing(
+                                        Set.<Quadrant>of(),
+                                        b -> b.quadrants,
+                                        (s1, s2) -> {
+                                            Set<Quadrant> set = new HashSet<>();
+                                            set.addAll(s1);
+                                            set.addAll(s2);
+                                            return set;
+                                        })));
+                bobbies = newPositionsAndQuadrants.entrySet().stream()
+                        .map(e -> new Bobby(e.getKey(), e.getValue()))
+                        .collect(Collectors.toSet());
+            }
+            return bobbies.stream().mapToInt(b -> b.quadrants.size()).sum();
+        }
+    }
+
+    int part2(List<String> data, int numSteps) {
+        var map = new InfiniteMap(data);
+        return map.walk(numSteps);
     }
 
     public static void main(String[] args) {
@@ -256,7 +372,7 @@ public class Day21 {
         var data = IO.getResourceAsList("day21.txt");
         var part1 = day21.part1(data, 64);
         System.out.println("part1 = " + part1);
-//        var part2 = day21.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day21.part2(data, 26501365);
+        System.out.println("part2 = " + part2);
     }
 }
