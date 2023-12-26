@@ -154,7 +154,11 @@ public class Day21 {
         }
 
         private boolean isAllowed(Position p) {
-            return points[p.y][p.x] == '.'  || points[p.y][p.x] == 'S';
+            return inBounds(p) && points[p.y][p.x] == '.'  || points[p.y][p.x] == 'S';
+        }
+
+        private boolean inBounds(Position p) {
+            return p.x >= 0 && p.x < width && p.y >= 0 && p.y < height;
         }
 
         private int walk(int steps) {
