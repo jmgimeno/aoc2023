@@ -438,7 +438,9 @@ public class Day20 {
         // &ln -> df
         // &xp -> df
         // &gp -> df
-        // so we need to know when all of them are high
+        // so we need to know when all of them are high -> lcm of their frequencies
+        // NOTE: I'm not sure why the first appearance of the HIGH puls in each module is exactly
+        // its frequency, but it works !!!
         var configuration = Configuration.parse(data);
         return GCRT.lcm(configuration.whenHigh(Set.of("xl", "ln", "xp", "gp")));
     }
