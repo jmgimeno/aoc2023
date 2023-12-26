@@ -1,7 +1,6 @@
 package aoc2023.day20;
 
 import aoc2023.utils.IO;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -51,9 +50,8 @@ class Day20Test {
 
     @Test
     @DisplayName("part2 - input data")
-    @Disabled("part2 - not implemented")
     void test4() {
         var data = IO.getResourceAsList("day20.txt");
-        assertEquals(-1, day20.part2(data));
+        assertEquals(253302889093151L, day20.part2(data));
     }
 }

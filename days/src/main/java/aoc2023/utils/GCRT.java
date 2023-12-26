@@ -1,6 +1,7 @@
 package aoc2023.utils;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 public class GCRT {
     // Generalized Chinese Remainder Theorem
@@ -24,14 +25,15 @@ public class GCRT {
         this.r = Arrays.copyOf(r, k);
     }
 
-    public record Result(long r, long m) {}
+    public record Result(long r, long m) {
+    }
 
     public Result solve() {
         long r0 = r[0];
         long m0 = m[0];
         for (int i = 1; i < k; i++) {
             var res = extendedEuclidean(m0, m[i]);
-            assert (r0 - r[i]) % res.gcd() == 0: "not soluble";
+            assert (r0 - r[i]) % res.gcd() == 0 : "not soluble";
             var lambda = (r0 - r[i]) / res.gcd();
             var sigma = r[i] + m[i] * lambda * res.t();
             m0 = (m0 * m[i]) / res.gcd();
@@ -43,7 +45,8 @@ public class GCRT {
     // Extended Euclidean Algorithm
     // - https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
 
-    public record ExtendedGcd(long gcd, long s, long t) {}
+    public record ExtendedGcd(long gcd, long s, long t) {
+    }
 
     public static ExtendedGcd extendedEuclidean(long a, long b) {
         long r0 = a;
@@ -65,5 +68,29 @@ public class GCRT {
             t1 = t2;
         }
         return new ExtendedGcd(r0, s0, t0);
+    }
+
+    public static long gcd(long a, long b) {
+        return extendedEuclidean(a, b).gcd();
+    }
+
+    public static long gcd(long... nums) {
+        return Arrays.stream(nums).reduce(GCRT::gcd).orElseThrow();
+    }
+
+    public static long gcd(Collection<Long> nums) {
+        return nums.stream().reduce(GCRT::gcd).orElseThrow();
+    }
+
+    public static long lcm(long a, long b) {
+        return (a * b) / gcd(a, b);
+    }
+
+    public static long lcm(long... nums) {
+        return Arrays.stream(nums).reduce(GCRT::lcm).orElseThrow();
+    }
+
+    public static long lcm(Collection<Long> nums) {
+        return nums.stream().reduce(GCRT::lcm).orElseThrow();
     }
 }

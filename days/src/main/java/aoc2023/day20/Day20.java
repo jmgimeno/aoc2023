@@ -1,5 +1,6 @@
 package aoc2023.day20;
 
+import aoc2023.utils.GCRT;
 import aoc2023.utils.IO;
 
 import java.util.*;
@@ -392,18 +393,25 @@ public class Day20 {
                     '}';
         }
 
-        boolean pushButtonOnceRx() {
-            ongoing.add(button.push());
-            while (!ongoing.isEmpty()) {
-                var message = ongoing.poll();
-                if (message.destination.equals("rx") && message.pulse == Pulse.LOW) {
-                    return true;
+        List<Long> whenHigh(Set<String> names) {
+            names = new HashSet<>(names);
+            var counters = new ArrayList<Long>();
+            long counter = 0;
+            do {
+                ongoing.add(button.push());
+                counter++;
+                while (!ongoing.isEmpty()) {
+                    var message = ongoing.poll();
+                    if (names.contains(message.origin) && message.pulse == Pulse.HIGH) {
+                        names.remove(message.origin);
+                        counters.add(counter);
+                    }
+                    var module = modules.getOrDefault(message.destination, new Conjunction.Untyped(message.destination));
+                    var messages = module.process(message.origin, message.pulse);
+                    messages.forEach(ongoing::add);
                 }
-                var module = modules.getOrDefault(message.destination, new Conjunction.Untyped(message.destination));
-                var messages = module.process(message.origin, message.pulse);
-                messages.forEach(ongoing::add);
-            }
-            return false;
+            } while (!names.isEmpty());
+            return counters;
         }
     }
 
@@ -424,12 +432,15 @@ public class Day20 {
      */
 
     long part2(List<String> data) {
+        // &df -> rx
+        // rx will receive a low pulse when all inputs of df are high
+        // &xl -> df
+        // &ln -> df
+        // &xp -> df
+        // &gp -> df
+        // so we need to know when all of them are high
         var configuration = Configuration.parse(data);
-        long count = 0;
-        while (!configuration.pushButtonOnceRx()) {
-            count++;
-        }
-        return count;
+        return GCRT.lcm(configuration.whenHigh(Set.of("xl", "ln", "xp", "gp")));
     }
 
     public static void main(String[] args) {
