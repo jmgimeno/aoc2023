@@ -83,7 +83,6 @@ class Day21Test {
 
     @Test
     @DisplayName("part2 - example data 500 steps")
-    @Disabled("too slow")
     void test3e() {
         var data = IO.splitLinesAsList(example);
         assertEquals(167004, day21.part2(data, 500));

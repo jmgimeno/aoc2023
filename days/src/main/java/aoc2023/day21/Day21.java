@@ -159,33 +159,15 @@ public class Day21 {
             return p.x >= 0 && p.x < width && p.y >= 0 && p.y < height;
         }
 
-        protected Position normalize(Position p) {
-            return p;
-        }
-
-        record State(int steps, int size) {}
-
-        String key(Set<Position> points) {
-            var normalized = points.stream().map(this::normalize).collect(Collectors.toSet());
-            var key = new StringBuilder();
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width ; x++) {
-                    key.append(normalized.contains(new Position(x, y)) ? '#' : '.');
-                }
-            }
-            return key.toString();
-        }
-
         int walk(int steps) {
             var points = Set.of(start);
             for (int stepsTaken = 0; stepsTaken < steps; stepsTaken++) {
-                var nextPoints = points.stream()
+                points = points.stream()
                         .flatMap(p1 -> p1.candidates(p1).stream())
                         .filter(this::isAllowed)
                         .collect(Collectors.toSet());
-                points = nextPoints;
             }
-            return points.size() ;
+            return points.size();
         }
     }
 
@@ -257,8 +239,6 @@ public class Day21 {
     garden plots could the Elf reach in exactly 26501365 steps?
      */
 
-
-
     static class InfiniteMap extends Map {
 
         record Quadrant(int x, int y) {
@@ -324,7 +304,7 @@ public class Day21 {
         protected Position normalize(Position p) {
             var x = p.x % width;
             x = x < 0 ? x + width : x;
-            var y =p.y % height;
+            var y = p.y % height;
             y = y < 0 ? y + height : y;
             return new Position(x, y);
         }
@@ -334,10 +314,48 @@ public class Day21 {
             return super.isAllowed(normalize(p));
         }
 
+        String key(Set<Bobby> bobbies) {
+            var positions = bobbies.stream().map(b -> b.position).collect(Collectors.toSet());
+            var builder = new StringBuilder();
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    var p = new Position(x, y);
+                    if (positions.contains(p)) {
+                        builder.append('b');
+                    } else {
+                        builder.append('.');
+                    }
+                }
+            }
+            return builder.toString();
+        }
+
+        record Photo(int steps, java.util.Map<Position, Integer> counters) {
+            Photo(int steps, Set<Bobby> bobbies) {
+                this(steps, bobbies.stream()
+                        .collect(Collectors.toMap(
+                                b -> b.position,
+                                b -> b.quadrants.size())));
+            }
+        }
+
+
         int walk(int steps) {
             var bob = new Bobby(start, Set.of(new Quadrant(0, 0)));
             var bobbies = Set.of(bob);
+            var photos = new HashMap<String, Photo>();
             for (int stepsTaken = 0; stepsTaken < steps; stepsTaken++) {
+                var key = key(bobbies);
+                if (photos.containsKey(key)) {
+                    var old = photos.get(key);
+                    System.out.println("loop find at = " + stepsTaken + " with previous at  " + old.steps);
+                    System.out.println("old counters = " + old.counters);
+                    System.out.println("old sum counters = " + old.counters.values().stream().mapToInt(i -> i).sum());
+                    System.out.println("new counters = " + new Photo(stepsTaken, bobbies).counters);
+                    System.out.println("new sum counters = " + new Photo(stepsTaken, bobbies).counters.values().stream().mapToInt(i -> i).sum());
+                    System.out.println("-----------------------");
+                }
+                photos.put(key(bobbies), new Photo(stepsTaken, bobbies));
                 var newPositionsAndQuadrants = bobbies.stream()
                         .flatMap(b -> Arrays.stream(Direction.directions)
                                 .map(b::move)
