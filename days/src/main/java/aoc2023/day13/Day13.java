@@ -12,14 +12,50 @@ public class Day13 {
     record Grid(List<String> data) {
 
         int part1() {
-            return verticalReflections() + 100 * transpose().verticalReflections();
+            return verticalReflections(0) + 100 * transpose().verticalReflections(0);
         }
 
-        int verticalReflections() {
+        int part2() {
+            return verticalReflections(1) + 100 * transpose().verticalReflections(1);
+        }
+
+        int verticalReflections(int maxDiffs) {
             var length = data.getFirst().length();
             var mirrors = new HashSet<>(IntStream.range(1, length).boxed().toList());
-            data.forEach(row -> mirrors.removeIf(mirror -> !reflects(row, mirror)));
+            var it = mirrors.iterator();
+            while (it.hasNext()) {
+                var diffs = 0;
+                var mirror = it.next();
+                for (var row : data) {
+                    diffs += diffs(row, mirror);
+                    if (diffs > maxDiffs) {
+                        it.remove();
+                        break;
+                    }
+                }
+            }
             return mirrors.stream().reduce(0, Integer::sum);
+        }
+
+        private int diffs(String row, int mirror) {
+            var length = row.length();
+            var left = row.substring(0, mirror);
+            var right = reversed(row).substring(0, length - mirror);
+            if (left.length() > right.length())
+                return diffs(left, right);
+            else
+                return diffs(right, left);
+        }
+
+        private int diffs(String longer, String shorter) {
+            var length = shorter.length();
+            var startLonger = longer.length() - length;
+            var diffs = 0;
+            for (int i = 0; i < length; i++) {
+                if (longer.charAt(startLonger + i) != shorter.charAt(i))
+                    diffs++;
+            }
+            return diffs;
         }
 
         private boolean reflects(String row, int mirror) {
@@ -68,7 +104,8 @@ public class Day13 {
     }
 
     int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+        var grids = parse(data);
+        return grids.stream().mapToInt(Grid::part2).sum() - grids.stream().mapToInt(Grid::part1).sum();
     }
 
     public static void main(String[] args) {
@@ -76,7 +113,7 @@ public class Day13 {
         var data = IO.getResourceAsList("day13.txt");
         var part1 = day13.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day13.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day13.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
