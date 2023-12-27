@@ -1,6 +1,7 @@
 package aoc2023.day22;
 
 import aoc2023.utils.IO;
+import com.google.common.collect.Streams;
 
 import java.util.*;
 
@@ -32,18 +33,18 @@ public class Day22 {
         }
     }
 
-    record Brick(Point3D lfd, Point3D rbu) implements Comparable<Brick> {
+    record Brick(long id, Point3D lfd, Point3D rbu) implements Comparable<Brick> {
         Brick {
             if (lfd.x() > rbu.x() || lfd.y() > rbu.y() || lfd.z() > rbu.z()) {
                 throw new IllegalArgumentException("lfd must be less than or equal to rbu");
             }
         }
 
-        static Brick parse(String s) {
+        static Brick parse(long id, String s) {
             var parts = s.split("~");
             var lfd = Point3D.parse(parts[0]);
             var rbu = Point3D.parse(parts[1]);
-            return new Brick(lfd, rbu);
+            return new Brick(id, lfd, rbu);
         }
 
         @Override
@@ -83,6 +84,37 @@ public class Day22 {
 
         boolean overlaps(Base other) {
             return !(lf.x() > other.rb.x() || other.lf.x() > rb.x() || lf.y() > other.rb.y() || other.lf.y() > rb.y());
+        }
+    }
+
+    static class Supports {
+        private final Map<Long, Set<Long>> supportedBy;
+        private final Map<Long, Set<Long>> supports;
+
+        public Supports() {
+            supportedBy = new HashMap<>();
+            supports = new HashMap<>();
+        }
+
+        public void isSupportedBy(long brick, long base) {
+            supportedBy.putIfAbsent(brick, new HashSet<>());
+            supportedBy.get(brick).add(base);
+            supports.putIfAbsent(base, new HashSet<>());
+            supports.get(base).add(brick);
+        }
+
+        public int totalSupports() {
+            return -1;
+        }
+
+        public int singleSupport() {
+            var singleSupport = new HashSet<Long>();
+            for (var base : supportedBy.values()) {
+                if (base.size() == 1) {
+                    singleSupport.add(base.iterator().next());
+                }
+            }
+            return singleSupport.size();
         }
     }
 
@@ -144,7 +176,7 @@ public class Day22 {
 
         public int safeToDisintegrate() {
             int maxHeight = bottoms.keySet().stream().max(Integer::compareTo).orElseThrow();
-            var unsafeToDisintegrate = new HashSet<Brick>();
+            var unsafeToDisintegrate = new HashSet<Long>();
             // all the last layer (maxHeight) are safe to disintegrate
             for (int height = 1; height <= maxHeight; height++) {
                 var supporting = tops.getOrDefault(height, Collections.emptyList());
@@ -153,23 +185,46 @@ public class Day22 {
                     var supportingTheBrick = supporting.stream().filter(brick::overlaps).toList();
                     assert !supportingTheBrick.isEmpty() : "a brick must be supported by at least one other brick";
                     if (supportingTheBrick.size() == 1) {
-                        unsafeToDisintegrate.add(supportingTheBrick.getFirst());
+                        unsafeToDisintegrate.add(supportingTheBrick.getFirst().id());
                     }
                 }
             }
             return bricksAdded - unsafeToDisintegrate.size();
         }
+
+        public Supports supportGraph() {
+            var graph = new Supports();
+            int maxHeight = bottoms.keySet().stream().max(Integer::compareTo).orElseThrow();
+            var unsafeToDisintegrate = new HashSet<Long>();
+            // all the last layer (maxHeight) are safe to disintegrate
+            for (int height = 1; height <= maxHeight; height++) {
+                var higher = bottoms.getOrDefault(height, Collections.emptyList());
+                var lower = tops.getOrDefault(height, Collections.emptyList());
+                for (var brick : higher) {
+                    var supportingTheBrick = lower.stream().filter(brick::overlaps).toList();
+                    assert !supportingTheBrick.isEmpty() : "a brick must be supported by at least one other brick";
+                    supportingTheBrick.forEach(base -> graph.isSupportedBy(brick.id(), base.id()));
+                }
+            }
+            return graph;
+        }
     }
 
     int part1(List<String> data) {
-        var bricks = data.stream().map(Brick::parse).sorted().toList();
+        var bricks = Streams.mapWithIndex(data.stream(), (s, id) -> Brick.parse(id, s)).sorted().toList();
         var pile = new Pile();
         bricks.forEach(pile::add);
-        return pile.safeToDisintegrate();
+        //return pile.safeToDisintegrate();
+        var graph = pile.supportGraph();
+        return pile.bricksAdded - graph.singleSupport();
     }
 
     int part2(List<String> data) {
-        throw new UnsupportedOperationException("part2");
+        var bricks = Streams.mapWithIndex(data.stream(), (s, id) -> Brick.parse(id, s)).sorted().toList();
+        var pile = new Pile();
+        bricks.forEach(pile::add);
+        var graph = pile.supportGraph();
+        return graph.totalSupports();
     }
 
     public static void main(String[] args) {
