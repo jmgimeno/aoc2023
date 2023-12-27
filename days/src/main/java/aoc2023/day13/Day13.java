@@ -33,6 +33,9 @@ public class Day13 {
                         break;
                     }
                 }
+                if (diffs == 0 && maxDiffs > 0)
+                    // for the second part I reject the case where there are no diffs
+                    it.remove();
             }
             return mirrors.stream().reduce(0, Integer::sum);
         }
@@ -56,13 +59,6 @@ public class Day13 {
                     diffs++;
             }
             return diffs;
-        }
-
-        private boolean reflects(String row, int mirror) {
-            var length = row.length();
-            var left = row.substring(0, mirror);
-            var right = reversed(row).substring(0, length - mirror);
-            return right.endsWith(left) || left.endsWith(right);
         }
 
         private String reversed(String string) {
@@ -105,7 +101,7 @@ public class Day13 {
 
     int part2(List<String> data) {
         var grids = parse(data);
-        return grids.stream().mapToInt(Grid::part2).sum() - grids.stream().mapToInt(Grid::part1).sum();
+        return grids.stream().mapToInt(Grid::part2).sum();
     }
 
     public static void main(String[] args) {
