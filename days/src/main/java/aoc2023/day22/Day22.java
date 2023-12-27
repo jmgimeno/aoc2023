@@ -104,7 +104,23 @@ public class Day22 {
         }
 
         public int totalSupports() {
-            return -1;
+            return supports.keySet().stream().mapToInt(this::totalSupports).sum();
+        }
+
+        private int totalSupports(long base) {
+            var disintegrated = new HashSet<Long>();
+            disintegrated.add(base);
+            boolean changed;
+            do {
+                changed = false;
+                for (var brick : supportedBy.keySet()) {
+                    var supportedByBrick = supportedBy.get(brick);
+                    if (supportedByBrick.stream().allMatch(disintegrated::contains)) {
+                        changed |= disintegrated.add(brick);
+                    }
+                }
+            } while (changed);
+            return disintegrated.size() - 1;
         }
 
         public int singleSupport() {
@@ -164,34 +180,6 @@ public class Day22 {
             return max;
         }
 
-        @Override
-        public String toString() {
-            return "Pile{" +
-                    "bottoms=" + bottoms +
-                    ", tops=" + tops +
-                    ", height=" + heights +
-                    ", bricksAdded=" + bricksAdded +
-                    '}';
-        }
-
-        public int safeToDisintegrate() {
-            int maxHeight = bottoms.keySet().stream().max(Integer::compareTo).orElseThrow();
-            var unsafeToDisintegrate = new HashSet<Long>();
-            // all the last layer (maxHeight) are safe to disintegrate
-            for (int height = 1; height <= maxHeight; height++) {
-                var supporting = tops.getOrDefault(height, Collections.emptyList());
-                var supported = bottoms.getOrDefault(height, Collections.emptyList());
-                for (var brick : supported) {
-                    var supportingTheBrick = supporting.stream().filter(brick::overlaps).toList();
-                    assert !supportingTheBrick.isEmpty() : "a brick must be supported by at least one other brick";
-                    if (supportingTheBrick.size() == 1) {
-                        unsafeToDisintegrate.add(supportingTheBrick.getFirst().id());
-                    }
-                }
-            }
-            return bricksAdded - unsafeToDisintegrate.size();
-        }
-
         public Supports supportGraph() {
             var graph = new Supports();
             int maxHeight = bottoms.keySet().stream().max(Integer::compareTo).orElseThrow();
@@ -214,7 +202,6 @@ public class Day22 {
         var bricks = Streams.mapWithIndex(data.stream(), (s, id) -> Brick.parse(id, s)).sorted().toList();
         var pile = new Pile();
         bricks.forEach(pile::add);
-        //return pile.safeToDisintegrate();
         var graph = pile.supportGraph();
         return pile.bricksAdded - graph.singleSupport();
     }
@@ -232,7 +219,7 @@ public class Day22 {
         var data = IO.getResourceAsList("day22.txt");
         var part1 = day22.part1(data);
         System.out.println("part1 = " + part1);
-//        var part2 = day22.part2(data);
-//        System.out.println("part2 = " + part2);
+        var part2 = day22.part2(data);
+        System.out.println("part2 = " + part2);
     }
 }
