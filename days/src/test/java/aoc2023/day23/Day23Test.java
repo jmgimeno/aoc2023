@@ -10,24 +10,45 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class Day23Test {
 
     static final String example = """
+            #.#####################
+            #.......#########...###
+            #######.#########.#.###
+            ###.....#.>.>.###.#.###
+            ###v#####.#v#.###.#.###
+            ###.>...#.#.#.....#...#
+            ###v###.#.#.#########.#
+            ###...#.#.#.......#...#
+            #####.#.#.#######.#.###
+            #.....#.#.#.......#...#
+            #.#####.#.#.#########v#
+            #.#...#...#...###...>.#
+            #.#.#v#######v###.###v#
+            #...#.>.#...>.>.#.###.#
+            #####v#.#.###v#.#.###.#
+            #.....#...#...#.#.#...#
+            #.#########.###.#.#.###
+            #...###...#...#...#.###
+            ###.###.#.###v#####v###
+            #...#...#.#.>.>.#.>.###
+            #.###.###.#.###.#.#v###
+            #.....###...###...#...#
+            #####################.#
             """;
 
     static final Day23 day23 = new Day23();
 
     @Test
     @DisplayName("part1 - example data")
-    @Disabled("part1 - not implemented")
     void test1() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(-1, day23.part1(data));
+        assertEquals(94, day23.part1(data));
     }
 
     @Test
     @DisplayName("part1 - input data")
-    @Disabled("part1 - not implemented")
     void test2() {
         var data = IO.getResourceAsList("day23.txt");
-        assertEquals(-1, day23.part1(data));
+        assertEquals(2074, day23.part1(data));
     }
 
     @Test
