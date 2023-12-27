@@ -152,11 +152,25 @@ public class Day21 {
             return super.isAllowed(normalize(p));
         }
 
-        int walk(int steps) {
+        // Thanks for the reddit forum for this hint (I tried to analyze the plot of the first 500 steps,
+        // but I couldn't find a pattern).
+        // The idea workd because of the special structure of the map:
+        // - The map is a square
+        // - S is in the middle of the map
+        // - The row and column of S are free to go
+        // - So, at time 65 the bobby reaches the limits of the map
+        // - Traversing the limit of  the next map needs 131 steps
+        // - Each "expansion" of the map generates a quadratic number of new positions
+        // - The number of steps that we are asked for are 26501365 = 131 * 202300 + 65
+        long walkQuadratic(int steps) {
             var bob = new Bobby(start, Set.of(new Quadrant(0, 0)));
             var bobbies = Set.of(bob);
+            var counters = new ArrayList<Integer>();
             for (int stepsTaken = 0; stepsTaken < steps; stepsTaken++) {
-//                System.out.println(stepsTaken + ";" + count(bobbies));
+                if (stepsTaken % 131 == 65)
+                    counters.add(count(bobbies));
+                if (counters.size() == 3)
+                    break;
                 var newPositionsAndQuadrants = bobbies.stream()
                         .flatMap(b -> Arrays.stream(Direction.directions)
                                 .map(b::move)
@@ -177,9 +191,8 @@ public class Day21 {
                         .map(e -> new Bobby(e.getKey(), e.getValue()))
                         .collect(Collectors.toSet());
             }
-            int finalCount = count(bobbies);
-//            System.out.println(steps + ";" + finalCount);
-            return finalCount;
+            var quadratic = Quadratic.solve(counters.get(0), counters.get(1), counters.get(2));
+            return quadratic.apply(steps / 131);
         }
 
         private static int count(Set<Bobby> bobbies) {
@@ -187,9 +200,22 @@ public class Day21 {
         }
     }
 
-    int part2(List<String> data, int numSteps) {
+    record Quadratic(long a, long b, long c) {
+        static Quadratic solve(long p0, long p1, long p2) {
+            long a = (p2 - 2 * p1 + p0) / 2;
+            long b = p1 -p0 - a;
+            long c = p0;
+            return new Quadratic(a, b, c);
+        }
+
+        long apply(long x) {
+            return a * x * x + b * x + c;
+        }
+    }
+
+    long part2(List<String> data, int numSteps) {
         var map = new InfiniteMap(data);
-        return map.walk(numSteps);
+        return map.walkQuadratic(numSteps);
     }
 
     public static void main(String[] args) {

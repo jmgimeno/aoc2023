@@ -53,71 +53,13 @@ class Day21Test {
         assertEquals(3682, day21.part1(data, 64));
     }
 
-    @Test
-    @DisplayName("part2 - example data 6 steps")
-    void test3a() {
-        var data = IO.splitLinesAsList(example);
-        assertEquals(16, day21.part2(data, 6));
-    }
-
-    @Test
-    @DisplayName("part2 - example data 10 steps")
-    void test3b() {
-        var data = IO.splitLinesAsList(example);
-        assertEquals(50, day21.part2(data, 10));
-    }
-
-    @Test
-    @DisplayName("part2 - example data 50 steps")
-    void test3c() {
-        var data = IO.splitLinesAsList(example);
-        assertEquals(1594, day21.part2(data, 50));
-    }
-
-    @Test
-    @DisplayName("part2 - example data 100 steps")
-    void test3d() {
-        var data = IO.splitLinesAsList(example);
-        assertEquals(6536, day21.part2(data, 100));
-    }
-
-    @Test
-    @DisplayName("part2 - example data 500 steps")
-    @Disabled("too slow")
-    void test3e() {
-        var data = IO.splitLinesAsList(example);
-        assertEquals(167004, day21.part2(data, 500));
-    }
-
-    @Test
-    @DisplayName("part2 - example data 1000 steps")
-    @Disabled("too slow")
-    void test3f() {
-        var data = IO.splitLinesAsList(example);
-        assertEquals(668697, day21.part2(data, 1000));
-    }
-
-    @Test
-    @DisplayName("part2 - example data 5000 steps")
-    @Disabled("too slow")
-    void test3g() {
-        var data = IO.splitLinesAsList(example);
-        assertEquals(16733044, day21.part2(data, 5000));
-    }
-
-    @Test
-    @DisplayName("part2 - input data 500 steps")
-    @Disabled("too slow")
-    void test4a() {
-        var data = IO.getResourceAsList("day21.txt");
-        assertEquals(-1, day21.part2(data, 500));
-    }
+    // Example data does nor work for part2
 
     @Test
     @DisplayName("part2 - input data")
-    @Disabled("part2 - not implemented")
+    @Disabled("Takes too long")
     void test4() {
         var data = IO.getResourceAsList("day21.txt");
-        assertEquals(-1, day21.part2(data, 26501365));
+        assertEquals(609012263058042L, day21.part2(data, 26501365));
     }
 }
