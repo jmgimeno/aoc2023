@@ -1,7 +1,6 @@
 package aoc2023.day21;
 
 import aoc2023.utils.IO;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -57,7 +56,6 @@ class Day21Test {
 
     @Test
     @DisplayName("part2 - input data")
-    @Disabled("Takes too long")
     void test4() {
         var data = IO.getResourceAsList("day21.txt");
         assertEquals(609012263058042L, day21.part2(data, 26501365));
