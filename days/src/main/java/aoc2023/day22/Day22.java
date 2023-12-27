@@ -56,7 +56,9 @@ public class Day22 {
         }
 
         public int height() {
-            return rbu.z() - lfd.z() + 1;
+            int height = rbu.z() - lfd.z() + 1;
+            assert height > 0 : "height must be positive";
+            return height;
         }
 
         boolean overlaps(Brick other) {
@@ -85,29 +87,34 @@ public class Day22 {
     }
 
     static class Pile {
-        private final Map<Integer, List<Brick>> bricksAtRest;
-        private final Map<Point2D, Integer> height;
+        private final Map<Integer, List<Brick>> bottoms;
+        private final Map<Integer, List<Brick>> tops;
+        private final Map<Point2D, Integer> heights;
         private int bricksAdded;
 
         public Pile() {
-            bricksAtRest = new HashMap<>();
-            height = new HashMap<>();
+            bottoms = new HashMap<>();
+            tops = new HashMap<>();
+            heights = new HashMap<>();
             bricksAdded = 0;
         }
 
         public void add(Brick brick) {
             var base = brick.base();
-            var height = height(base);
-            bricksAtRest.putIfAbsent(height, new ArrayList<>());
-            bricksAtRest.get(height).add(brick);
-            updateHeight(base, height + brick.height());
+            var bottom = height(base);
+            var top = bottom + brick.height();
+            bottoms.putIfAbsent(bottom, new ArrayList<>());
+            bottoms.get(bottom).add(brick);
+            tops.putIfAbsent(top, new ArrayList<>());
+            tops.get(top).add(brick);
+            updateHeight(base, top);
             bricksAdded++;
         }
 
         private void updateHeight(Base base, int newHeight) {
             for (var x = base.lf().x(); x <= base.rb().x(); x++) {
                 for (var y = base.lf().y(); y <= base.rb().y(); y++) {
-                    height.put(new Point2D(x, y), newHeight);
+                    heights.put(new Point2D(x, y), newHeight);
                 }
             }
         }
@@ -116,7 +123,7 @@ public class Day22 {
             var max = 0;
             for (var x = base.lf().x(); x <= base.rb().x(); x++) {
                 for (var y = base.lf().y(); y <= base.rb().y(); y++) {
-                    var h = height.getOrDefault(new Point2D(x, y), 0);
+                    var h = heights.getOrDefault(new Point2D(x, y), 0);
                     if (h > max) {
                         max = h;
                     }
@@ -128,21 +135,23 @@ public class Day22 {
         @Override
         public String toString() {
             return "Pile{" +
-                    "bricksAtRest=" + bricksAtRest +
-                    ", height=" + height +
+                    "bottoms=" + bottoms +
+                    ", tops=" + tops +
+                    ", height=" + heights +
+                    ", bricksAdded=" + bricksAdded +
                     '}';
         }
 
         public int safeToDisintegrate() {
-            int maxHeight = bricksAtRest.keySet().stream().max(Integer::compareTo).orElseThrow();
+            int maxHeight = bottoms.keySet().stream().max(Integer::compareTo).orElseThrow();
             var unsafeToDisintegrate = new HashSet<Brick>();
             // all the last layer (maxHeight) are safe to disintegrate
-            for (int height = 0; height < maxHeight; height++) {
-                var supporting = bricksAtRest.getOrDefault(height, Collections.emptyList());
-                var supported = bricksAtRest.getOrDefault(height + 1, Collections.emptyList());
+            for (int height = 1; height <= maxHeight; height++) {
+                var supporting = tops.getOrDefault(height, Collections.emptyList());
+                var supported = bottoms.getOrDefault(height, Collections.emptyList());
                 for (var brick : supported) {
                     var supportingTheBrick = supporting.stream().filter(brick::overlaps).toList();
-                    assert !supportingTheBrick.isEmpty();
+                    assert !supportingTheBrick.isEmpty() : "a brick must be supported by at least one other brick";
                     if (supportingTheBrick.size() == 1) {
                         unsafeToDisintegrate.add(supportingTheBrick.getFirst());
                     }
@@ -154,7 +163,6 @@ public class Day22 {
 
     int part1(List<String> data) {
         var bricks = data.stream().map(Brick::parse).sorted().toList();
-        System.out.println("bricks = " + bricks);
         var pile = new Pile();
         bricks.forEach(pile::add);
         return pile.safeToDisintegrate();
