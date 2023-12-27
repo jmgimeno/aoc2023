@@ -152,48 +152,11 @@ public class Day21 {
             return super.isAllowed(normalize(p));
         }
 
-        String key(Set<Bobby> bobbies) {
-            var positions = bobbies.stream().map(b -> b.position).collect(Collectors.toSet());
-            var builder = new StringBuilder();
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    var p = new Position(x, y);
-                    if (positions.contains(p)) {
-                        builder.append('b');
-                    } else {
-                        builder.append('.');
-                    }
-                }
-            }
-            return builder.toString();
-        }
-
-        record Photo(int steps, java.util.Map<Position, Integer> counters) {
-            Photo(int steps, Set<Bobby> bobbies) {
-                this(steps, bobbies.stream()
-                        .collect(Collectors.toMap(
-                                b -> b.position,
-                                b -> b.quadrants.size())));
-            }
-        }
-
-
         int walk(int steps) {
             var bob = new Bobby(start, Set.of(new Quadrant(0, 0)));
             var bobbies = Set.of(bob);
-            var photos = new HashMap<String, Photo>();
             for (int stepsTaken = 0; stepsTaken < steps; stepsTaken++) {
-                var key = key(bobbies);
-                if (photos.containsKey(key)) {
-                    var old = photos.get(key);
-                    System.out.println("loop find at = " + stepsTaken + " with previous at  " + old.steps);
-                    System.out.println("old counters = " + old.counters);
-                    System.out.println("old sum counters = " + old.counters.values().stream().mapToInt(i -> i).sum());
-                    System.out.println("new counters = " + new Photo(stepsTaken, bobbies).counters);
-                    System.out.println("new sum counters = " + new Photo(stepsTaken, bobbies).counters.values().stream().mapToInt(i -> i).sum());
-                    System.out.println("-----------------------");
-                }
-                photos.put(key(bobbies), new Photo(stepsTaken, bobbies));
+//                System.out.println(stepsTaken + ";" + count(bobbies));
                 var newPositionsAndQuadrants = bobbies.stream()
                         .flatMap(b -> Arrays.stream(Direction.directions)
                                 .map(b::move)
@@ -214,6 +177,12 @@ public class Day21 {
                         .map(e -> new Bobby(e.getKey(), e.getValue()))
                         .collect(Collectors.toSet());
             }
+            int finalCount = count(bobbies);
+//            System.out.println(steps + ";" + finalCount);
+            return finalCount;
+        }
+
+        private static int count(Set<Bobby> bobbies) {
             return bobbies.stream().mapToInt(b -> b.quadrants.size()).sum();
         }
     }

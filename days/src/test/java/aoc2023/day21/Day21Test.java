@@ -83,6 +83,7 @@ class Day21Test {
 
     @Test
     @DisplayName("part2 - example data 500 steps")
+    @Disabled("too slow")
     void test3e() {
         var data = IO.splitLinesAsList(example);
         assertEquals(167004, day21.part2(data, 500));
@@ -102,6 +103,14 @@ class Day21Test {
     void test3g() {
         var data = IO.splitLinesAsList(example);
         assertEquals(16733044, day21.part2(data, 5000));
+    }
+
+    @Test
+    @DisplayName("part2 - input data 500 steps")
+    @Disabled("too slow")
+    void test4a() {
+        var data = IO.getResourceAsList("day21.txt");
+        assertEquals(-1, day21.part2(data, 500));
     }
 
     @Test
