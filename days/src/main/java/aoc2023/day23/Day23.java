@@ -138,10 +138,29 @@ public class Day23 {
 
         int longestPath(V start, V end) {
 
-            record State<V>(V vertex, List<V> path, int distance) {
+            record Path<V>(V vertex, Path<V> next) {
+
+                Path(V vertex) {
+                    this(vertex, null);
+                }
+
+                Path<V> extend(V vertex) {
+                    return new Path<>(vertex, this);
+                }
+
+                boolean contains(V vertex) {
+                    var current = this;
+                    while (current != null) {
+                        if (current.vertex.equals(vertex)) return true;
+                        current = current.next;
+                    }
+                    return false;
+                }
+            }
+
+            record State<V>(V vertex, Path<V> path, int distance) {
                 State(V vertex) {
-                    this(vertex, new ArrayList<>(), 0);
-                    path.addLast(vertex);
+                    this(vertex, new Path<>(vertex), 0);
                 }
             }
 
@@ -161,10 +180,7 @@ public class Day23 {
 
                 for (var next : neighbours(state.vertex)) {
                     if (!state.path.contains(next.vertex)) {
-                        var newDistance = state.distance + next.weight;
-                        var newPath = new ArrayList<>(state.path);
-                        newPath.addLast(state.vertex);
-                        stack.add(new State<>(next.vertex, newPath, newDistance));
+                        stack.add(new State<>(next.vertex, state.path.extend(next.vertex), state.distance + next.weight));
                     }
                 }
             }
