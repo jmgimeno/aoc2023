@@ -53,17 +53,15 @@ class Day23Test {
 
     @Test
     @DisplayName("part2 - example data")
-    @Disabled("part2 - not implemented")
     void test3() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(-1, day23.part2(data));
+        assertEquals(154, day23.part2(data));
     }
 
     @Test
     @DisplayName("part2 - input data")
-    @Disabled("part2 - not implemented")
     void test4() {
         var data = IO.getResourceAsList("day23.txt");
-        assertEquals(-1, day23.part2(data));
+        assertEquals(6494, day23.part2(data));
     }
 }
