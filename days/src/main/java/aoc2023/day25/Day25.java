@@ -93,10 +93,8 @@ public class Day25 {
             int subset1 = find(subsets, edge[i].src);
             int subset2 = find(subsets, edge[i].dst);
             if (subset1 != subset2) {
-                {
-                    union(subsets, subset1, subset2);
-                    vertices--;
-                }
+                union(subsets, subset1, subset2);
+                vertices--;
             }
         }
 
