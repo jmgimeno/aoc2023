@@ -30,7 +30,7 @@ class Day24Test {
     @DisplayName("part1 - input data")
     void test2() {
         var data = IO.getResourceAsList("day24.txt");
-        assertEquals(-1, day24.part1(data, 200000000000000L, 400000000000000L));
+        assertEquals(12343, day24.part1(data, 200000000000000L, 400000000000000L));
     }
 
     @Test
