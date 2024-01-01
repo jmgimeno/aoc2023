@@ -109,7 +109,7 @@ public class Day24 {
         }
     }
 
-    int part11(List<String> data, long min, long max) {
+    int part1(List<String> data, long min, long max) {
         var bound = new Boundary(min, max);
         var lines = data.stream().map(Hailstone3D::parse).toList();
         var crossings = 0;
@@ -125,10 +125,10 @@ public class Day24 {
         return crossings;
     }
 
-    record Hailstone2DR(Vector2DR pos, Vector2D vel) {
+    record Part2Result(Vector2DR pos, Vector2D vel) {
     }
 
-    Optional<Hailstone2DR> tryVelocityR(List<Hailstone3D> hailstones, Axis axis, int security, Vector2D rockV) {
+    Optional<Part2Result> tryVelocity(List<Hailstone3D> hailstones, Axis axis, int security, Vector2D rockV) {
         int count = 0;
         var positions = new HashSet<Vector2DR>();
         for (int i = 0; i < hailstones.size(); i++) {
@@ -140,7 +140,7 @@ public class Day24 {
                     positions.add(crossPoint.get());
                     count++;
                     if (count >= security && positions.size() == 1)
-                        return Optional.of(new Hailstone2DR(positions.iterator().next(), rockV));
+                        return Optional.of(new Part2Result(positions.iterator().next(), rockV));
                 } else {
                     return Optional.empty();
                 }
@@ -149,11 +149,11 @@ public class Day24 {
         return Optional.empty();
     }
 
-    Optional<Hailstone2DR> possibleRockR(List<Hailstone3D> hailstones, Axis axis, long range, int security) {
+    Optional<Part2Result> possibleRock(List<Hailstone3D> hailstones, Axis axis, long range, int security) {
         for (long v1 = -range; v1 <= range; v1++) {
             for (long v2 = -range; v2 <= range; v2++) {
                 var rockV = new Vector2D(v1, v2); // velocity for the rock
-                var tryV = tryVelocityR(hailstones, axis, security, rockV);
+                var tryV = tryVelocity(hailstones, axis, security, rockV);
                 if (tryV.isPresent())
                     return tryV;
             }
@@ -161,10 +161,11 @@ public class Day24 {
         return Optional.empty();
     }
 
-    long part22(List<String> data, long range, int security) {
+    // Thanks to https://www.reddit.com/user/Bikkel77/
+    long part2(List<String> data, long range, int security) {
         var lines = data.stream().map(Hailstone3D::parse).toList();
-        var rXY = possibleRockR(lines, Axis.Z, range, security).orElseThrow();
-        var rXZ = possibleRockR(lines, Axis.Y, range, security).orElseThrow();
+        var rXY = possibleRock(lines, Axis.Z, range, security).orElseThrow();
+        var rXZ = possibleRock(lines, Axis.Y, range, security).orElseThrow();
         assert rXY.pos.ax1().compareTo(rXZ.pos.ax1()) == 0 : "rocks are not in the same position";
         assert rXY.vel.ax1() == rXZ.vel.ax1() : "rocks are not moving in the same direction";
         // I assume the final coordinates for the position are long
@@ -174,9 +175,9 @@ public class Day24 {
     public static void main(String[] args) {
         var day24 = new Day24();
         var data = IO.getResourceAsList("day24.txt");
-        var part1 = day24.part11(data, 200000000000000L, 400000000000000L);
+        var part1 = day24.part1(data, 200000000000000L, 400000000000000L);
         System.out.println("part1 = " + part1);
-        var part2 = day24.part22(data, 300L, 5);
+        var part2 = day24.part2(data, 300L, 5);
         System.out.println("part2 = " + part2);
     }
 }

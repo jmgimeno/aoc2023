@@ -22,27 +22,27 @@ class Day24Test {
     @DisplayName("part1 - example data")
     void test1() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(2, day24.part11(data, 7L, 27L));
+        assertEquals(2, day24.part1(data, 7L, 27L));
     }
 
     @Test
     @DisplayName("part1 - input data")
     void test2() {
         var data = IO.getResourceAsList("day24.txt");
-        assertEquals(12343, day24.part11(data, 200000000000000L, 400000000000000L));
+        assertEquals(12343, day24.part1(data, 200000000000000L, 400000000000000L));
     }
 
     @Test
     @DisplayName("part2 - example data")
     void test3() {
         var data = IO.splitLinesAsList(example);
-        assertEquals(47, day24.part22(data, 25L, 4));
+        assertEquals(47, day24.part2(data, 25L, 4));
     }
 
     @Test
     @DisplayName("part2 - input data")
     void test4() {
         var data = IO.getResourceAsList("day24.txt");
-        assertEquals(769281292688187L, day24.part22(data, 300L, 5));
+        assertEquals(769281292688187L, day24.part2(data, 300L, 5));
     }
 }
