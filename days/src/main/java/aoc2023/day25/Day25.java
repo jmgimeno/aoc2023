@@ -1,12 +1,39 @@
 package aoc2023.day25;
 
 import aoc2023.utils.IO;
+import aoc2023.utils.UnionFind;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class Day25 {
 
     public static class Graph {
+
+        public record Edge(int src, int dst) {
+        }
+
+        private final Map<String, Integer> ids;
+        private final ArrayList<Edge> edges;
+
+        public Graph() {
+            ids = new HashMap<>();
+            edges = new ArrayList<>();
+        }
+
+        public int numVertices() {
+            return ids.size();
+        }
+
+        public int numEdges() {
+            return edges.size();
+        }
+
+        public void addEdge(String from, String to) {
+            ids.putIfAbsent(from, ids.size());
+            ids.putIfAbsent(to, ids.size());
+            edges.add(new Edge(ids.get(from), ids.get(to)));
+        }
 
         public void update(String line) {
             var parts = line.split(":");
@@ -16,120 +43,51 @@ public class Day25 {
                 addEdge(from, to.trim());
             }
         }
-
-        public record Edge(int src, int dst) {
-        }
-
-        public Map<String, Integer> ids;
-        public ArrayList<Edge> edges;
-
-        public Graph() {
-            ids = new HashMap<>();
-            edges = new ArrayList<>();
-        }
-
-        public void addEdge(String from, String to) {
-            ids.putIfAbsent(from, ids.size());
-            ids.putIfAbsent(to, ids.size());
-            edges.add(new Edge(ids.get(from), ids.get(to)));
-        }
-
-        public Graph copy() {
-            var copy = new Graph();
-            copy.ids = new HashMap<>(ids);
-            copy.edges = new ArrayList<>(edges);
-            return copy;
-        }
     }
 
-    public static class Subset {
-        int parent;
-        int rank;
-
-        public Subset(int parent, int rank) {
-            this.parent = parent;
-            this.rank = rank;
-        }
-    }
-
-    public static int find(Subset[] subsets, int i) {
-        if (subsets[i].parent != i)
-            subsets[i].parent = find(subsets, subsets[i].parent);
-        return subsets[i].parent;
-    }
-
-    public static void union(Subset[] subsets, int x, int y) {
-        int xroot = find(subsets, x);
-        int yroot = find(subsets, y);
-        if (subsets[xroot].rank < subsets[yroot].rank) {
-            subsets[xroot].parent = yroot;
-        } else if (subsets[xroot].rank > subsets[yroot].rank) {
-            subsets[yroot].parent = xroot;
-        } else {
-            subsets[yroot].parent = xroot;
-            subsets[xroot].rank++;
-        }
-    }
-
-    public record Cut(int mincut, int part1) {
+    public record Cut(long mincut, long part1) {
     }
 
     public static Cut kargerMinCut(Graph graph) {
         Random random = new Random();
-        int V = graph.ids.size();
-        int E = graph.edges.size();
-        Graph.Edge[] edge = new Graph.Edge[E];
-        graph.edges.toArray(edge);
-
-        Subset[] subsets = new Subset[V];
-        for (int v = 0; v < V; ++v) {
-            subsets[v] = new Subset(v, 0);
-        }
-
-        int vertices = V;
+        int vertices = graph.numVertices();
+        UnionFind subsets = new UnionFind(vertices);
 
         while (vertices > 2) {
-            int i = random.nextInt(E);
-            int subset1 = find(subsets, edge[i].src);
-            int subset2 = find(subsets, edge[i].dst);
+            var edge = graph.edges.get(random.nextInt(graph.numEdges()));
+            int subset1 = subsets.find(edge.src);
+            int subset2 = subsets.find(edge.dst);
             if (subset1 != subset2) {
-                union(subsets, subset1, subset2);
+                subsets.union(subset1, subset2);
                 vertices--;
             }
         }
 
-        int cutedges = 0;
-        for (int i = 0; i < E; i++) {
-            int subset1 = find(subsets, edge[i].src);
-            int subset2 = find(subsets, edge[i].dst);
-            if (subset1 != subset2) {
-                cutedges++;
-            }
-        }
+        long cutedges =
+                graph.edges.stream()
+                        .filter(edge -> subsets.find(edge.src) != subsets.find(edge.dst))
+                        .count();
 
-        int class0 = find(subsets, 0); // subset of vertex 0
-        int count0 = 1;
-        for (int i = 1; i < V; i++) {
-            if (find(subsets, i) == class0) {
-                count0++;
-            }
-        }
+        long count0 =
+                IntStream.range(0, graph.numVertices())
+                        .filter(vertice -> subsets.find(vertice) == subsets.find(0))
+                        .count();
 
-        return new Cut(cutedges, count0 * (V - count0));
+        return new Cut(cutedges, count0 * (graph.ids.size() - count0));
     }
 
     // The idea will be to use different runs of Karger's algorithm
     // to find a mincut of size three (that the problem statement
     // guarantees exists).  Then we can use the fact that the
     // mincut is unique to find the product of the partition sizes
-    int part1(List<String> data) {
+
+    long part1(List<String> data) {
         var graph = new Graph();
         data.forEach(graph::update);
         Cut cut;
         do {
-            var g = graph.copy();
-            cut = kargerMinCut(g);
-        } while (cut.mincut() != 3);
+            cut = kargerMinCut(graph);
+        } while (cut.mincut() != 3L);
         return cut.part1();
     }
 
