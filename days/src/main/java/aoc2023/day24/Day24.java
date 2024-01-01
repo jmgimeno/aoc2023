@@ -1,5 +1,6 @@
 package aoc2023.day24;
 
+import aoc2023.utils.BigRational;
 import aoc2023.utils.IO;
 
 import java.util.List;
@@ -15,10 +16,10 @@ public class Day24 {
         }
     }
 
-    record Vector2D(double x, double y) {
+    record Vector2D(BigRational x, BigRational y) {
     }
 
-    record Crossing(Vector2D p, double time1, double time2) {
+    record Crossing(Vector2D p, BigRational time1, BigRational time2) {
     }
 
     static final class Hailstone3D {
@@ -39,48 +40,51 @@ public class Day24 {
         public Line2D projectXY() {
             // x = dx + vx * t => t = (x - dx) / vx
             // y = dy + vy * t => y = dy + vy *  (x - dx) / vx = (vy / vx) * x + dy - (vy / vx) * dx
-            double dx = pos0.x();
-            double dy = pos0.y();
-            double vx = vel.x();
-            double vy = vel.y();
-            double a = vy / vx;
-            double b = dy - a * dx;
+
+            var dx = new BigRational(pos0.x());
+            var dy = new BigRational(pos0.y());
+            var vx = new BigRational(vel.x());
+            var vy = new BigRational(vel.y());
+
+            var a = vy.divide(vx);
+            var b = dy.subtract(a.multiply(dx));
+
             return new Line2D(a, b);
         }
 
-        public Optional<Crossing> crosses(Hailstone3D o) {
+        public Optional<Crossing> crossesXY(Hailstone3D o) {
             var line1 = projectXY();
             var line2 = o.projectXY();
             var crossPoint = line1.crosses(line2);
             return crossPoint.map(p -> new Crossing(p, time(p), o.time(p)));
         }
 
-        public double time(Vector2D p) {
+        public BigRational time(Vector2D p) {
             // x = dx + vx * t => t = (x - dx) / vx
-            return (p.x() - (double) pos0.x()) / vel.x();
+            return (p.x().subtract(new BigRational(pos0.x()))).divide(new BigRational(vel.x()));
         }
     }
 
-    record Line2D(double a, double b) { // y = a * x + b
+    record Line2D(BigRational a, BigRational b) { // y = a * x + b
         Optional<Vector2D> crosses(Line2D o) {
-            if (Double.compare(a, o.a) == 0)
+            if (a.compareTo(o.a) == 0)
                 return Optional.empty();
             // a1 x + b1 = a2 x + b2 => a1 x - a2 x = b2 - b1 => x = (b2 - b1) / (a1 - a2)
             // y = a1 * x + b1
-            double x = (o.b - b) / (a - o.a);
-            double y = a * x + b;
+            var x = (o.b.subtract(b)).divide(a.subtract(o.a));
+            var y = a.multiply(x).add(b);
             return Optional.of(new Vector2D(x, y));
         }
     }
 
     record TestArea(long min, long max) {
         public boolean containsInTheFuture(Crossing c) {
-            var mind = (double) min;
-            var maxd = (double) max;
-            return mind <= c.p().x() && c.p().x() <= maxd
-                    && mind <= c.p().y() && c.p().y() <= maxd
-                    && c.time1() >= 0
-                    && c.time2() >= 0;
+            var minr = new BigRational(min);
+            var maxr = new BigRational(max);
+            return minr.compareTo(c.p().x()) <= 0 && c.p().x().compareTo(maxr) <= 0
+                    && minr.compareTo(c.p().y()) <= 0 && c.p().y().compareTo(maxr) <= 0
+                    && c.time1().compareTo(BigRational.ZERO) >= 0
+                    && c.time2().compareTo(BigRational.ZERO) >= 0;
         }
     }
 
@@ -90,7 +94,7 @@ public class Day24 {
         var crossings = 0;
         for (int i = 0; i < lines.size(); i++)
             for (int j = i + 1; j < lines.size(); j++) {
-                var cross = lines.get(i).crosses(lines.get(j)).filter(area::containsInTheFuture);
+                var cross = lines.get(i).crossesXY(lines.get(j)).filter(area::containsInTheFuture);
                 if (cross.isPresent())
                     crossings++;
             }
